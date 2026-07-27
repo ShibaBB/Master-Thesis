@@ -6,7 +6,7 @@
   - Shared dataset generation and dataset inspection scripts used by both MLP and symbolic-regression workflows.
 - [MLP](</C:/Users/liuzi/OneDrive/Master Thesis/Fibers/surrogate_model/MLP>)
   - MLP-only training scripts, MLP artifacts, and MLP-specific notes.
-- [symbolic_regression](</C:/Users/liuzi/OneDrive/Master Thesis/Fibers/surrogate_model/symbolic_regression>)
+- [segmented_symbolic_regression](</C:/Users/liuzi/OneDrive/Master Thesis/Fibers/surrogate_model/segmented_symbolic_regression>)
   - Current segmented symbolic-regression workflow using PySR.
   - This is the active segmented SR model branch.
 - [global_symbolic_regression](</C:/Users/liuzi/OneDrive/Master Thesis/Fibers/surrogate_model/global_symbolic_regression>)
@@ -38,13 +38,13 @@ Use only datasets from the same `run*` folder when comparing MLP, segmented SR, 
 - MLP baseline training:
   - [mlp_train_surrogate_baseline.m](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/MLP/mlp_train_surrogate_baseline.m:1)
 - Symbolic scalar dataset generation:
-  - [generate_symbolic_dataset.m](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/symbolic_regression/generate_symbolic_dataset.m:1)
+  - [generate_segmented_symbolic_dataset.m](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/segmented_symbolic_regression/generate_segmented_symbolic_dataset.m:1)
 - Symbolic scalar dataset inspection:
-  - [inspect_symbolic_dataset.m](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/symbolic_regression/inspect_symbolic_dataset.m:1)
+  - [inspect_segmented_symbolic_dataset.m](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/segmented_symbolic_regression/inspect_segmented_symbolic_dataset.m:1)
 - Symbolic-regression strategy:
-  - [strategy_symbolic.md](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/symbolic_regression/strategy_symbolic.md:1)
+  - [strategy_segmented_symbolic.md](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/segmented_symbolic_regression/strategy_segmented_symbolic.md:1)
 - Symbolic handoff note:
-  - [symbolic_regression_handoff.md](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/symbolic_regression/symbolic_regression_handoff.md:1)
+  - [segmented_symbolic_regression_handoff.md](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/segmented_symbolic_regression/segmented_symbolic_regression_handoff.md:1)
 - Planned global symbolic-regression branch:
   - [global_symbolic_regression](</C:/Users/liuzi/OneDrive/Master Thesis/Fibers/surrogate_model/global_symbolic_regression>)
 
@@ -52,7 +52,7 @@ Use only datasets from the same `run*` folder when comparing MLP, segmented SR, 
 
 - MLP-only scripts use the `mlp_` prefix.
 - Shared teacher-data pipeline scripts live only under `data_generation/`.
-- Segmented symbolic-regression files live under `symbolic_regression/`.
+- Segmented symbolic-regression files live under `segmented_symbolic_regression/`.
 - Global symbolic-regression files should live under `global_symbolic_regression/` once that model branch is implemented.
 
 This separation is intended to reduce accidental cross-calling between the MLP and symbolic-regression branches.

@@ -14,4 +14,4 @@ symbolic_dataset_config.output_file = fullfile(surrogate_root, 'datasets', 'run1
 symbolic_dataset_config.segment_bounds_hz = [100, 2000];
 symbolic_dataset_config.segment_names = {'global_100_2000'};
 
-run(fullfile(surrogate_root, 'symbolic_regression', 'generate_symbolic_dataset.m'));
+run(fullfile(surrogate_root, 'segmented_symbolic_regression', 'generate_segmented_symbolic_dataset.m'));

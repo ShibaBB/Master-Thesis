@@ -1,0 +1,27 @@
+{
+  "segment_id": 1,
+  "segment_name": "low_100_700",
+  "lower_hz": 100.0,
+  "upper_hz": 700.0,
+  "equation": "-0.047385447 - (f * ((7.5610723 / sigma) + -0.001041037))",
+  "complexity": 9,
+  "loss": 0.00063292775,
+  "score": 0.8815777790637457,
+  "n_rows_used": 20000,
+  "n_train": 16000,
+  "n_test": 4000,
+  "train_metrics": {
+    "rmse": 0.02515805661047193,
+    "mae": 0.019287507717476345,
+    "max_abs_error": 0.19298115322000864,
+    "r2": 0.9746341804958109
+  },
+  "test_metrics": {
+    "rmse": 0.02486067612808598,
+    "mae": 0.01909005834834467,
+    "max_abs_error": 0.15213890921706985,
+    "r2": 0.9753153154342717
+  },
+  "equations_csv": "C:\\Users\\liuzi\\OneDrive\\Master Thesis\\Fibers\\surrogate_model\\segmented_symbolic_regression\\artifacts\\wool_symbolic_pysr_segments_runs\\20260718_153941_iter40_pop8_ps80_size24_allrows_five_segments_iter40_size24\\equations\\low_100_700_equations.csv",
+  "model_file": "C:\\Users\\liuzi\\OneDrive\\Master Thesis\\Fibers\\surrogate_model\\segmented_symbolic_regression\\artifacts\\wool_symbolic_pysr_segments_runs\\20260718_153941_iter40_pop8_ps80_size24_allrows_five_segments_iter40_size24\\models\\low_100_700_pysr_model.pkl"
+}

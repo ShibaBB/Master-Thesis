@@ -1,0 +1,27 @@
+{
+  "segment_id": 5,
+  "segment_name": "high_1650_2000",
+  "lower_hz": 1650.0,
+  "upper_hz": 2000.0,
+  "equation": "(-0.07786355 / alpha_infinity) + ((sigma * -3.455685e-6) - -1.0985857)",
+  "complexity": 9,
+  "loss": 0.0004118079,
+  "score": 0.2613194118633542,
+  "n_rows_used": 12000,
+  "n_train": 9600,
+  "n_test": 2400,
+  "train_metrics": {
+    "rmse": 0.020293052446698285,
+    "mae": 0.01418979247696777,
+    "max_abs_error": 0.16355594981718036,
+    "r2": 0.9394637592135429
+  },
+  "test_metrics": {
+    "rmse": 0.021832721701344655,
+    "mae": 0.014773968612431533,
+    "max_abs_error": 0.15218206547347346,
+    "r2": 0.9288722365162407
+  },
+  "equations_csv": "C:\\Users\\liuzi\\AppData\\Local\\Temp\\fibers_segmented_sr\\wool_segmented_symbolic_pysr_runs\\20260727_130534_iter100_pop12_ps100_size28_allrows_run1_iter100_pop12_ps100_size28_allrows_serial\\equations\\high_1650_2000_equations.csv",
+  "model_file": "C:\\Users\\liuzi\\AppData\\Local\\Temp\\fibers_segmented_sr\\wool_segmented_symbolic_pysr_runs\\20260727_130534_iter100_pop12_ps100_size28_allrows_run1_iter100_pop12_ps100_size28_allrows_serial\\models\\high_1650_2000_pysr_model.pkl"
+}

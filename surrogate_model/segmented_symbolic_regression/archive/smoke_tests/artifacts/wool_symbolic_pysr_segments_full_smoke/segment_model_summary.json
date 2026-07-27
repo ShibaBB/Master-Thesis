@@ -1,0 +1,83 @@
+[
+  {
+    "segment_id": 1,
+    "segment_name": "low_100_700",
+    "lower_hz": 100.0,
+    "upper_hz": 700.0,
+    "equation": "log(sqrt(1.1841365))",
+    "complexity": 3,
+    "loss": 0.086020984,
+    "score": 8.471065333183482,
+    "n_rows_used": 30,
+    "n_train": 24,
+    "n_test": 6,
+    "train_metrics": {
+      "rmse": 0.29329337251918397,
+      "mae": 0.25993557655826555,
+      "max_abs_error": 0.49633969854210563,
+      "r2": -3.2273604113756713
+    },
+    "test_metrics": {
+      "rmse": 0.35355750326443963,
+      "mae": 0.3358147447434581,
+      "max_abs_error": 0.4442849893551631,
+      "r2": -9.21986546619137
+    },
+    "equations_csv": "surrogate_model\\segmented_symbolic_regression\\artifacts\\wool_symbolic_pysr_segments_full_smoke\\equations\\low_100_700_equations.csv",
+    "model_file": "surrogate_model\\segmented_symbolic_regression\\artifacts\\wool_symbolic_pysr_segments_full_smoke\\models\\low_100_700_pysr_model.pkl"
+  },
+  {
+    "segment_id": 2,
+    "segment_name": "mid_700_1300",
+    "lower_hz": 700.0,
+    "upper_hz": 1300.0,
+    "equation": "4.474984 / log(f)",
+    "complexity": 4,
+    "loss": 0.0107336445,
+    "score": 0.25174092621797234,
+    "n_rows_used": 30,
+    "n_train": 24,
+    "n_test": 6,
+    "train_metrics": {
+      "rmse": 0.10360330948517708,
+      "mae": 0.08389465426250368,
+      "max_abs_error": 0.24444719484533217,
+      "r2": -0.33665340218773765
+    },
+    "test_metrics": {
+      "rmse": 0.14102943184208622,
+      "mae": 0.1305706586823309,
+      "max_abs_error": 0.20408723301208354,
+      "r2": -0.3452248841695664
+    },
+    "equations_csv": "surrogate_model\\segmented_symbolic_regression\\artifacts\\wool_symbolic_pysr_segments_full_smoke\\equations\\mid_700_1300_equations.csv",
+    "model_file": "surrogate_model\\segmented_symbolic_regression\\artifacts\\wool_symbolic_pysr_segments_full_smoke\\models\\mid_700_1300_pysr_model.pkl"
+  },
+  {
+    "segment_id": 3,
+    "segment_name": "high_1300_2000",
+    "lower_hz": 1300.0,
+    "upper_hz": 2000.0,
+    "equation": "sqrt(log(sqrt(0.3646293) / 0.31357014))",
+    "complexity": 6,
+    "loss": 0.0076335445,
+    "score": 0.9924250034405295,
+    "n_rows_used": 30,
+    "n_train": 24,
+    "n_test": 6,
+    "train_metrics": {
+      "rmse": 0.08737015617287765,
+      "mae": 0.07589103240116883,
+      "max_abs_error": 0.16515556507891616,
+      "r2": -1.5616921089645075e-09
+    },
+    "test_metrics": {
+      "rmse": 0.09769141582616205,
+      "mae": 0.07650452408511886,
+      "max_abs_error": 0.16255442134550935,
+      "r2": -0.15238495123333196
+    },
+    "equations_csv": "surrogate_model\\segmented_symbolic_regression\\artifacts\\wool_symbolic_pysr_segments_full_smoke\\equations\\high_1300_2000_equations.csv",
+    "model_file": "surrogate_model\\segmented_symbolic_regression\\artifacts\\wool_symbolic_pysr_segments_full_smoke\\models\\high_1300_2000_pysr_model.pkl"
+  }
+]
