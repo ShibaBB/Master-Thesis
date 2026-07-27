@@ -1,14 +1,14 @@
 # Surrogate Model Project Handoff
 
-This handoff describes the current state of `Fibers/surrogate_model`: model
-branches, run logic, shared dataset structure, artifact layout, and Git/GitHub
-sync policy. It is intended to give a new conversation enough context to work
-on the project without first rediscovering the repository.
+This handoff describes the current state of `surrogate_model`: model branches,
+run logic, shared dataset structure, artifact layout, and Git/GitHub sync
+policy. It is intended to give a new conversation enough context to continue
+work without rediscovering the repository.
 
 ## Project Goal
 
-The project compares lightweight surrogate models for a MATLAB JCAL acoustic
-absorption teacher model.
+The project compares surrogate models for a MATLAB JCAL acoustic absorption
+teacher model.
 
 Target mapping:
 
@@ -16,7 +16,7 @@ Target mapping:
 material/acoustic parameters + frequency -> absorption coefficient alpha
 ```
 
-The horizontal comparison is planned across three surrogate branches:
+The planned horizontal comparison has three model branches:
 
 ```text
 1. MLP
@@ -24,8 +24,8 @@ The horizontal comparison is planned across three surrogate branches:
 3. global symbolic regression
 ```
 
-All three models must use data from the same dataset run for a fair comparison.
-The current shared dataset run is:
+All three branches must use data from the same dataset run for a fair
+comparison. The current shared dataset run is:
 
 ```text
 surrogate_model/datasets/run1
@@ -33,10 +33,11 @@ surrogate_model/datasets/run1
 
 ## Repository Location And Remote
 
-Current local workspace:
+The active local working copy has been moved off OneDrive. The current intended
+workspace is:
 
 ```text
-C:/Users/liuzi/OneDrive/Master Thesis/Fibers
+C:/MasterThesis_Project
 ```
 
 GitHub remote:
@@ -51,19 +52,22 @@ Current branch:
 main
 ```
 
-The user is considering moving the working clone to a local non-OneDrive path,
-for example:
+Current synchronization logic:
 
 ```text
-C:/Projects/Fibers
+Each computer keeps its own local hard-drive clone.
+Training and analysis are run from the local clone, not from OneDrive.
+GitHub is used to synchronize code, shared datasets, and analysis-ready
+artifacts between computers.
+Only one computer should train/write/push a given run at a time.
 ```
 
-That is recommended for long PySR runs because OneDrive can lock or delay
-frequently written PySR files.
+OneDrive is no longer part of the intended training workflow. This avoids file
+locking, delayed sync, and slow frequent writes during PySR runs.
 
 ## Top-Level Structure
 
-Current relevant project layout:
+Relevant project layout:
 
 ```text
 surrogate_model/
@@ -89,22 +93,22 @@ Directory roles:
 
 ```text
 data_generation/
-  Shared MATLAB teacher dataset generation/inspection scripts.
+  Shared MATLAB teacher dataset generation and inspection scripts.
 
 datasets/
-  Shared dataset runs. Horizontal model comparisons must use data from the
-  same run folder.
+  Shared dataset runs. Horizontal comparisons must use files from the same
+  run folder.
 
 MLP/
-  MLP baseline training code, MLP notes, and MLP artifacts.
+  MLP baseline code, notes, and MLP artifacts.
 
 segmented_symbolic_regression/
   Active segmented symbolic regression branch. Uses PySR and trains separate
   formulas on predefined frequency segments.
 
 global_symbolic_regression/
-  Planned global symbolic regression branch. Dataset generation and inspection
-  exist; formal PySR training/evaluation is not implemented yet.
+  Global symbolic regression branch. Dataset generation and inspection exist;
+  formal global PySR training/evaluation is not implemented yet.
 
 docs/
   Background notes, original task descriptions, and strategy/reference files.
@@ -128,10 +132,12 @@ surrogate_model/datasets/run1/segmented_SR/Wool_symbolic_segmented.mat
 surrogate_model/datasets/run1/global_SR/Wool_symbolic_global.mat
 ```
 
-The comparison rule is:
+Comparison rule:
 
 ```text
-Use only datasets within the same run_id for horizontal comparison.
+Use only datasets within the same run_id for horizontal model comparison.
+Do not compare a model trained on one dataset run with a model trained on
+another dataset run.
 ```
 
 ### Teacher / MLP Dataset
@@ -318,7 +324,7 @@ train_segmented_symbolic_models.py
 evaluate_segmented_symbolic_candidates.py
 ```
 
-Current default output roots:
+Current output roots:
 
 ```text
 artifacts/wool_segmented_symbolic_pysr_runs
@@ -333,7 +339,7 @@ artifacts/archived_pre_segmented_rename_artifacts
 ```
 
 Those archived folders are retained for traceability only. Current scripts do
-not write to:
+not write to the old unsegmented names:
 
 ```text
 wool_symbolic_pysr_segments_runs
@@ -367,11 +373,6 @@ maxsize = 28
 rows used = all 64000 scalar samples
 parallelism = serial
 ```
-
-The `serial` setting was used because writing PySR outputs directly in a
-OneDrive-synced directory previously caused a `hall_of_fame.csv` permission
-error. The successful run was written first to a local temp path and then
-copied back into the project artifact folder.
 
 Training summary:
 
@@ -455,7 +456,7 @@ Current global inspection artifact:
 surrogate_model/global_symbolic_regression/artifacts/wool_symbolic_global_dataset_inspection
 ```
 
-The global inspection driver reuses the segmented inspection script but now
+The global inspection driver reuses the segmented inspection logic but
 explicitly overrides the output directory so global artifacts stay under:
 
 ```text
@@ -501,7 +502,7 @@ current project state that means all model branches should read from:
 surrogate_model/datasets/run1
 ```
 
-Current data generation sequence used successfully:
+Current data generation sequence:
 
 ```text
 1. Generate MLP teacher curve data:
@@ -528,24 +529,36 @@ Current segmented SR training/evaluation sequence:
    --max-complexity 16
 ```
 
-When training on a OneDrive-synced project folder, prefer writing PySR output
-to a local scratch path first, then copying curated artifacts back into the
-repo. This avoids OneDrive file locking and sync delays.
+MLP and global SR do not yet have formal comparable training/evaluation runs.
+They should continue to read from `run1` when those pipelines are completed.
 
 ## Git And GitHub Sync Policy
 
-Recommended working mode for two computers:
+Intended workflow for two computers:
 
 ```text
-Use a local, non-OneDrive clone on each computer.
-Use GitHub to sync code, shared datasets, and analysis-ready artifacts.
-Do not use Git as a dump for transient PySR training state.
+Computer A:
+  git pull
+  run local training/evaluation
+  inspect outputs
+  git add curated outputs and any code changes
+  git commit
+  git push
+
+Computer B:
+  git pull
+  analyze the committed run or continue from the synchronized state
 ```
+
+Use local hard-drive clones on both computers. Do not train from OneDrive.
+Do not train from two computers at the same time against the same run/artifact
+folder unless a separate run name is intentionally chosen.
 
 Before starting work on either computer:
 
 ```powershell
-git pull
+git pull --ff-only
+git status
 ```
 
 After a successful training/evaluation run:
@@ -557,16 +570,12 @@ git commit -m "Add segmented SR run ..."
 git push
 ```
 
-The other computer should then run:
-
-```powershell
-git pull
-```
-
 Files that should be committed when another computer needs to analyze a run
 without retraining:
 
 ```text
+dataset_manifest.json
+datasets/run*/**/*.mat, when the dataset run is part of the shared comparison
 segment_model_summary.csv
 segment_model_summary.json
 training_metadata.json
@@ -576,6 +585,7 @@ candidate_metrics.csv
 selected_candidates.csv
 selected_combination_summary.json
 figures/*.png
+models/*.pkl, only when another computer needs to load PySR model objects
 ```
 
 Files that should normally stay out of Git:
@@ -584,13 +594,16 @@ Files that should normally stay out of Git:
 .venv/
 .venv_py311/
 __pycache__/
+*.pyc
 pysr_runs/**/checkpoint.pkl
 pysr_runs/**/*.bak
 local scratch/tmp output folders
+MATLAB autosave files
+OS metadata files
 ```
 
-`models/*.pkl` are intentionally not ignored. Commit them only when another
-computer needs to load PySR model objects directly. Most analysis should work
+`models/*.pkl` are intentionally not ignored, but they should be committed only
+when they are needed for cross-computer analysis. Most analysis should work
 from:
 
 ```text
@@ -601,24 +614,25 @@ selected_candidates.csv
 selected_combination_summary.json
 ```
 
-`pysr_runs/**/hall_of_fame.csv` is also intentionally not globally ignored, but
-the preferred portable candidate table is `equations/*.csv`. Commit raw
+`pysr_runs/**/hall_of_fame.csv` is also intentionally not globally ignored,
+but the preferred portable candidate table is `equations/*.csv`. Commit raw
 `hall_of_fame.csv` files only if a specific follow-up requires PySR's raw
 output.
 
-Current `.gitignore` policy ignores transient environments, Python caches,
+The current `.gitignore` policy ignores transient environments, Python caches,
 PySR checkpoints, PySR `.bak` files, and local scratch/tmp folders while keeping
 analysis-ready artifacts visible to Git.
 
-## Important Caveats
+On Windows, long artifact paths can exceed the default Git path limit. The
+local setup should keep this enabled:
 
-The current workspace still has many unstaged/untracked changes because the
-segmented symbolic regression branch was renamed from the old
-`symbolic_regression` name and artifacts were reorganized. Do not use
-destructive Git commands such as `git reset --hard` or `git checkout --` unless
-the user explicitly requests it.
+```powershell
+git config --global core.longpaths true
+```
 
-The old folder name:
+## Naming And Separation Rules
+
+The old branch name:
 
 ```text
 surrogate_model/symbolic_regression
@@ -630,11 +644,47 @@ has been replaced by:
 surrogate_model/segmented_symbolic_regression
 ```
 
-Global SR should remain separate under:
+Global SR must remain separate under:
 
 ```text
 surrogate_model/global_symbolic_regression
 ```
 
-Current segmented SR is mature enough for reporting-level inspection. Global
-SR and MLP are not yet at the same formal comparison maturity.
+Current segmented scripts and artifacts should use `segmented` in names where
+possible. Old unsegmented artifact directories under
+`archived_pre_segmented_rename_artifacts` are historical only and should not be
+used as active output locations.
+
+## Current Git State
+
+The local hard-drive clone at `C:/MasterThesis_Project` was checked after the
+move from OneDrive. At that point:
+
+```text
+branch: main
+HEAD: 73f94e9 Organize surrogate model structure and artifacts
+origin/main: same commit
+git pull --ff-only: Already up to date
+working tree: clean before this handoff edit
+```
+
+If a future conversation starts from this handoff, first run:
+
+```powershell
+cd C:\MasterThesis_Project
+git status --short --branch
+git pull --ff-only
+```
+
+## Current Maturity Summary
+
+Current segmented SR is mature enough for reporting-level inspection. Its
+recommended evaluation is the `max_complexity=16` selected-candidate evaluation
+listed above.
+
+Global SR currently has dataset generation and inspection only. Formal global
+PySR training/evaluation still needs to be implemented before it can be fairly
+compared.
+
+MLP currently has a small baseline artifact only. It is not yet at the same
+formal comparison maturity as segmented SR.
