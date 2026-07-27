@@ -1,0 +1,137 @@
+[
+  {
+    "segment_id": 1,
+    "segment_name": "low_100_700",
+    "lower_hz": 100.0,
+    "upper_hz": 700.0,
+    "equation": "phi * 0.33128324",
+    "complexity": 3,
+    "loss": 0.020479022,
+    "score": 0.8534791801132096,
+    "n_rows_used": 20,
+    "n_train": 15,
+    "n_test": 5,
+    "train_metrics": {
+      "rmse": 0.143104934395981,
+      "mae": 0.12014938982798179,
+      "max_abs_error": 0.2766578577783781,
+      "r2": -1.9457768729580494e-12
+    },
+    "test_metrics": {
+      "rmse": 0.13816849307830262,
+      "mae": 0.11842248620126491,
+      "max_abs_error": 0.20179060041517766,
+      "r2": -0.020906134556841094
+    },
+    "equations_csv": "archive\\smoke_tests\\artifacts\\segmented_local_disk_smoke_training_20260727_193327\\equations\\low_100_700_equations.csv",
+    "model_file": "archive\\smoke_tests\\artifacts\\segmented_local_disk_smoke_training_20260727_193327\\models\\low_100_700_pysr_model.pkl"
+  },
+  {
+    "segment_id": 2,
+    "segment_name": "midlow_700_1000",
+    "lower_hz": 700.0,
+    "upper_hz": 1000.0,
+    "equation": "0.36322382 / sqrt(lambda_var + 0.36467907)",
+    "complexity": 6,
+    "loss": 0.0026962017,
+    "score": 0.22449524077564265,
+    "n_rows_used": 20,
+    "n_train": 15,
+    "n_test": 5,
+    "train_metrics": {
+      "rmse": 0.05192497661646761,
+      "mae": 0.04480961388966873,
+      "max_abs_error": 0.0822410254424244,
+      "r2": 9.815860256523479e-05
+    },
+    "test_metrics": {
+      "rmse": 0.05032355202579622,
+      "mae": 0.04207524510375456,
+      "max_abs_error": 0.07810523682524217,
+      "r2": -2.324241636892946
+    },
+    "equations_csv": "archive\\smoke_tests\\artifacts\\segmented_local_disk_smoke_training_20260727_193327\\equations\\midlow_700_1000_equations.csv",
+    "model_file": "archive\\smoke_tests\\artifacts\\segmented_local_disk_smoke_training_20260727_193327\\models\\midlow_700_1000_pysr_model.pkl"
+  },
+  {
+    "segment_id": 3,
+    "segment_name": "midhigh_1000_1300",
+    "lower_hz": 1000.0,
+    "upper_hz": 1300.0,
+    "equation": "log(log(log(f)))",
+    "complexity": 4,
+    "loss": 0.0040247114,
+    "score": 2.900738580644411,
+    "n_rows_used": 20,
+    "n_train": 15,
+    "n_test": 5,
+    "train_metrics": {
+      "rmse": 0.06344059722122275,
+      "mae": 0.05179614745848653,
+      "max_abs_error": 0.10296465945259081,
+      "r2": -0.8326205215830511
+    },
+    "test_metrics": {
+      "rmse": 0.040431501341181154,
+      "mae": 0.032617341362394844,
+      "max_abs_error": 0.07447091334307132,
+      "r2": -0.4858181028085815
+    },
+    "equations_csv": "archive\\smoke_tests\\artifacts\\segmented_local_disk_smoke_training_20260727_193327\\equations\\midhigh_1000_1300_equations.csv",
+    "model_file": "archive\\smoke_tests\\artifacts\\segmented_local_disk_smoke_training_20260727_193327\\models\\midhigh_1000_1300_pysr_model.pkl"
+  },
+  {
+    "segment_id": 4,
+    "segment_name": "highlow_1300_1650",
+    "lower_hz": 1300.0,
+    "upper_hz": 1650.0,
+    "equation": "phi * 0.87964714",
+    "complexity": 3,
+    "loss": 0.009878588,
+    "score": 2.644874194040257,
+    "n_rows_used": 20,
+    "n_train": 15,
+    "n_test": 5,
+    "train_metrics": {
+      "rmse": 0.09939109595290256,
+      "mae": 0.08338740226758992,
+      "max_abs_error": 0.19058613836634897,
+      "r2": -1.9761969838327786e-14
+    },
+    "test_metrics": {
+      "rmse": 0.07907705653089686,
+      "mae": 0.05288759131790375,
+      "max_abs_error": 0.16312091746754165,
+      "r2": -0.17735123089139782
+    },
+    "equations_csv": "archive\\smoke_tests\\artifacts\\segmented_local_disk_smoke_training_20260727_193327\\equations\\highlow_1300_1650_equations.csv",
+    "model_file": "archive\\smoke_tests\\artifacts\\segmented_local_disk_smoke_training_20260727_193327\\models\\highlow_1300_1650_pysr_model.pkl"
+  },
+  {
+    "segment_id": 5,
+    "segment_name": "high_1650_2000",
+    "lower_hz": 1650.0,
+    "upper_hz": 2000.0,
+    "equation": "(-1.5269633e-19 / k0_prime) + 0.83139557",
+    "complexity": 5,
+    "loss": 0.00685813,
+    "score": 0.12925651128838975,
+    "n_rows_used": 20,
+    "n_train": 15,
+    "n_test": 5,
+    "train_metrics": {
+      "rmse": 0.08281382309095045,
+      "mae": 0.07410397876250484,
+      "max_abs_error": 0.15726078450256098,
+      "r2": -2.927109665762373e-10
+    },
+    "test_metrics": {
+      "rmse": 0.09294219437812833,
+      "mae": 0.072049856786261,
+      "max_abs_error": 0.16642494928494722,
+      "r2": -0.5131631569745865
+    },
+    "equations_csv": "archive\\smoke_tests\\artifacts\\segmented_local_disk_smoke_training_20260727_193327\\equations\\high_1650_2000_equations.csv",
+    "model_file": "archive\\smoke_tests\\artifacts\\segmented_local_disk_smoke_training_20260727_193327\\models\\high_1650_2000_pysr_model.pkl"
+  }
+]

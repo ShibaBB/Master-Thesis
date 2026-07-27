@@ -1,0 +1,6 @@
+complexity,loss,equation,score,sympy_format,lambda_format
+1,2.463597,-0.9673131,0.0,-0.967313100000000,PySRFunction(X=>-0.967313100000000)
+2,0.028889451,sqrt(0.58255845),4.445901244899678,0.763255167031315,PySRFunction(X=>0.763255167031315)
+3,0.017196922,phi + -0.43900514,0.5187460968653683,phi - 0.43900514,PySRFunction(X=>phi - 0.43900514)
+4,0.0042242194,log(log(log(f))),1.4038959279740122,log(log(log(f))),PySRFunction(X=>log(log(log(f))))
+6,0.0026962017,0.36322382 / sqrt(lambda_var + 0.36467907),0.22449524077564265,0.36322382/sqrt(lambda_var + 0.36467907),PySRFunction(X=>0.36322382/sqrt(lambda_var + 0.36467907))

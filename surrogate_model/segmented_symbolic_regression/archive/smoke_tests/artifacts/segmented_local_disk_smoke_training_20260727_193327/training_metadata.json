@@ -1,0 +1,82 @@
+{
+  "dataset_file": "C:\\MasterThesis_Project\\surrogate_model\\datasets\\run1\\segmented_SR\\Wool_symbolic_segmented.mat",
+  "fiberfolder": "Wool",
+  "num_curve_samples": 1000,
+  "num_symbolic_samples": 64000,
+  "feature_names": [
+    "phi",
+    "h",
+    "sigma",
+    "alpha_infinity",
+    "lambda",
+    "lambda_prime",
+    "k0_prime",
+    "f"
+  ],
+  "pysr_variable_names": [
+    "phi",
+    "h",
+    "sigma",
+    "alpha_infinity",
+    "lambda_var",
+    "lambda_prime",
+    "k0_prime",
+    "f"
+  ],
+  "feature_name_mapping": {
+    "phi": "phi",
+    "h": "h",
+    "sigma": "sigma",
+    "alpha_infinity": "alpha_infinity",
+    "lambda": "lambda_var",
+    "lambda_prime": "lambda_prime",
+    "k0_prime": "k0_prime",
+    "f": "f"
+  },
+  "segment_names": [
+    "low_100_700",
+    "midlow_700_1000",
+    "midhigh_1000_1300",
+    "highlow_1300_1650",
+    "high_1650_2000"
+  ],
+  "segment_bounds": [
+    [
+      100.0,
+      700.0
+    ],
+    [
+      700.0,
+      1000.0
+    ],
+    [
+      1000.0,
+      1300.0
+    ],
+    [
+      1300.0,
+      1650.0
+    ],
+    [
+      1650.0,
+      2000.0
+    ]
+  ],
+  "training_args": {
+    "dataset_file": "C:\\MasterThesis_Project\\surrogate_model\\datasets\\run1\\segmented_SR\\Wool_symbolic_segmented.mat",
+    "output_root": "C:\\MasterThesis_Project\\surrogate_model\\segmented_symbolic_regression\\artifacts\\wool_segmented_symbolic_pysr_runs",
+    "output_dir": "archive\\smoke_tests\\artifacts\\segmented_local_disk_smoke_training_20260727_193327",
+    "run_name": "local_disk_smoke",
+    "random_seed": 7,
+    "test_size": 0.25,
+    "max_samples_per_segment": 20,
+    "niterations": 1,
+    "populations": 2,
+    "population_size": 30,
+    "maxsize": 7,
+    "model_selection": "best",
+    "procs": 0,
+    "julia_exe": "C:\\Users\\liuzi\\.julia\\juliaup\\julia-1.11.9+0.x64.w64.mingw32\\bin\\julia.exe",
+    "overwrite": true
+  }
+}

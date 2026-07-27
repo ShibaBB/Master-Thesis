@@ -1,0 +1,4 @@
+Complexity,Loss,Equation
+1,0.2767285,"-0.20143053"
+2,0.04808067,"log(alpha_infinity)"
+3,0.020479022,"phi * 0.33128324"

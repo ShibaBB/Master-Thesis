@@ -1,0 +1,27 @@
+{
+  "segment_id": 3,
+  "segment_name": "midhigh_1000_1300",
+  "lower_hz": 1000.0,
+  "upper_hz": 1300.0,
+  "equation": "log(log(log(f)))",
+  "complexity": 4,
+  "loss": 0.0040247114,
+  "score": 2.900738580644411,
+  "n_rows_used": 20,
+  "n_train": 15,
+  "n_test": 5,
+  "train_metrics": {
+    "rmse": 0.06344059722122275,
+    "mae": 0.05179614745848653,
+    "max_abs_error": 0.10296465945259081,
+    "r2": -0.8326205215830511
+  },
+  "test_metrics": {
+    "rmse": 0.040431501341181154,
+    "mae": 0.032617341362394844,
+    "max_abs_error": 0.07447091334307132,
+    "r2": -0.4858181028085815
+  },
+  "equations_csv": "archive\\smoke_tests\\artifacts\\segmented_local_disk_smoke_training_20260727_193327\\equations\\midhigh_1000_1300_equations.csv",
+  "model_file": "archive\\smoke_tests\\artifacts\\segmented_local_disk_smoke_training_20260727_193327\\models\\midhigh_1000_1300_pysr_model.pkl"
+}
