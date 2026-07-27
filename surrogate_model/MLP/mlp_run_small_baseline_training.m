@@ -9,7 +9,7 @@ script_dir = fileparts(mfilename('fullpath'));
 surrogate_root = fileparts(script_dir);
 
 surrogate_training_config = struct();
-surrogate_training_config.dataset_file = fullfile(surrogate_root, 'data_generation', 'generated_data', 'Wool_surrogate_dataset_small.mat');
+surrogate_training_config.dataset_file = fullfile(surrogate_root, 'datasets', 'smoke', 'MLP', 'Wool_surrogate_dataset_small.mat');
 surrogate_training_config.experiment_name = 'wool_baseline_mlp_small';
 surrogate_training_config.max_epochs = 80;
 surrogate_training_config.mini_batch_size = 16;

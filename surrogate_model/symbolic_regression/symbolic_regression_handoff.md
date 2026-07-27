@@ -7,7 +7,7 @@
 - The symbolic workflow already has dataset generation and dataset inspection scaffolding.
 - The PySR runtime environment is ready.
 - The segment-wise PySR training and candidate-evaluation workflow is implemented.
-- The default full symbolic dataset has been generated from `Wool_surrogate_dataset.mat`.
+- The default full symbolic dataset has been generated from `datasets/run1/MLP/Wool_surrogate_dataset.mat`.
 - Early smoke-test material has been archived under [archive/smoke_tests](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/symbolic_regression/archive/smoke_tests/README.md:1).
 
 ## Existing Files
@@ -60,7 +60,7 @@ The generated `.mat` file currently stores:
 
 The current default generated symbolic dataset is:
 
-- [generated_data/Wool_symbolic_dataset.mat](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/symbolic_regression/generated_data/Wool_symbolic_dataset.mat)
+- [datasets/run1/segmented_SR/Wool_symbolic_segmented.mat](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/datasets/run1/segmented_SR/Wool_symbolic_segmented.mat)
 - Curve samples: `1000`
 - Frequency points: `64`
 - Symbolic scalar samples: `64000`

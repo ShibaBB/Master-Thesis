@@ -27,7 +27,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_DATASET = SCRIPT_DIR / "generated_data" / "Wool_symbolic_dataset.mat"
+DEFAULT_DATASET = SCRIPT_DIR.parent / "datasets" / "run1" / "segmented_SR" / "Wool_symbolic_segmented.mat"
 DEFAULT_TRAINING_ROOT = SCRIPT_DIR / "artifacts" / "wool_symbolic_pysr_segments_runs"
 DEFAULT_OUTPUT_ROOT = SCRIPT_DIR / "artifacts" / "wool_symbolic_candidate_evaluation_runs"
 

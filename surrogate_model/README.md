@@ -15,6 +15,20 @@
 - [docs](</C:/Users/liuzi/OneDrive/Master Thesis/Fibers/surrogate_model/docs>)
   - General background notes, original strategy documents, and reference material.
 
+## Dataset Runs
+
+All model comparisons should use one dataset run at a time.
+
+Current comparison dataset:
+
+- [datasets/run1](</C:/Users/liuzi/OneDrive/Master Thesis/Fibers/surrogate_model/datasets/run1>)
+  - `MLP/Wool_surrogate_dataset.mat`: shared teacher curve dataset for MLP.
+  - `segmented_SR/Wool_symbolic_segmented.mat`: scalar dataset for segmented SR.
+  - `global_SR/Wool_symbolic_global.mat`: scalar dataset for global SR.
+  - `dataset_manifest.json`: source and comparison metadata.
+
+Use only datasets from the same `run*` folder when comparing MLP, segmented SR, and global SR.
+
 ## Recommended Entry Points
 
 - Shared dataset generation:

@@ -27,7 +27,7 @@ n_samples = 1000;
 sampling_method = 'lhs';
 random_seed = 42;
 
-output_dir = fullfile(surrogate_root, 'data_generation', 'generated_data');
+output_dir = fullfile(surrogate_root, 'datasets', 'run1', 'MLP');
 output_file = fullfile(output_dir, sprintf('%s_surrogate_dataset.mat', fiberfolder));
 
 if exist('surrogate_dataset_config', 'var')

@@ -12,7 +12,7 @@ surrogate_root = fileparts(script_dir);
 project_root = fileparts(surrogate_root);
 
 %% Configuration
-dataset_file = fullfile(surrogate_root, 'data_generation', 'generated_data', 'Wool_surrogate_dataset.mat');
+dataset_file = fullfile(surrogate_root, 'datasets', 'run1', 'MLP', 'Wool_surrogate_dataset.mat');
 
 experiment_name = 'wool_baseline_mlp';
 artifacts_dir = fullfile(surrogate_root, 'MLP', 'artifacts', experiment_name);

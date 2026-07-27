@@ -9,10 +9,10 @@ script_dir = fileparts(mfilename('fullpath'));
 surrogate_root = fileparts(script_dir);
 
 %% Configuration
-teacher_dataset_file = fullfile(surrogate_root, 'data_generation', 'generated_data', 'Wool_surrogate_dataset.mat');
+teacher_dataset_file = fullfile(surrogate_root, 'datasets', 'run1', 'MLP', 'Wool_surrogate_dataset.mat');
 
-output_dir = fullfile(script_dir, 'generated_data');
-output_file = fullfile(output_dir, 'Wool_symbolic_dataset.mat');
+output_dir = fullfile(surrogate_root, 'datasets', 'run1', 'segmented_SR');
+output_file = fullfile(output_dir, 'Wool_symbolic_segmented.mat');
 
 segment_bounds_hz = [
     100, 700;

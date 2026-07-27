@@ -17,7 +17,7 @@ Compared with the MLP branch, this model does not predict a full absorption curv
 The current teacher dataset is:
 
 ```text
-surrogate_model/data_generation/generated_data/Wool_surrogate_dataset.mat
+surrogate_model/datasets/run1/MLP/Wool_surrogate_dataset.mat
 ```
 
 It contains:
@@ -30,7 +30,7 @@ It contains:
 The symbolic dataset generated from it is:
 
 ```text
-surrogate_model/symbolic_regression/generated_data/Wool_symbolic_dataset.mat
+surrogate_model/datasets/run1/segmented_SR/Wool_symbolic_segmented.mat
 ```
 
 It contains:
