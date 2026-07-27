@@ -1,0 +1,2 @@
+complexity,loss,equation,score,sympy_format,lambda_format
+3,0.006103869,lambda_var + 0.85020757,0.0,lambda_var + 0.85020757,PySRFunction(X=>lambda_var + 0.85020757)

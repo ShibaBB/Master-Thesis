@@ -1,0 +1,82 @@
+{
+  "dataset_file": "C:\\Users\\liuzi\\OneDrive\\Master Thesis\\Fibers\\surrogate_model\\symbolic_regression\\generated_data\\Wool_symbolic_dataset.mat",
+  "fiberfolder": "Wool",
+  "num_curve_samples": 1000,
+  "num_symbolic_samples": 64000,
+  "feature_names": [
+    "phi",
+    "h",
+    "sigma",
+    "alpha_infinity",
+    "lambda",
+    "lambda_prime",
+    "k0_prime",
+    "f"
+  ],
+  "pysr_variable_names": [
+    "phi",
+    "h",
+    "sigma",
+    "alpha_infinity",
+    "lambda_var",
+    "lambda_prime",
+    "k0_prime",
+    "f"
+  ],
+  "feature_name_mapping": {
+    "phi": "phi",
+    "h": "h",
+    "sigma": "sigma",
+    "alpha_infinity": "alpha_infinity",
+    "lambda": "lambda_var",
+    "lambda_prime": "lambda_prime",
+    "k0_prime": "k0_prime",
+    "f": "f"
+  },
+  "segment_names": [
+    "low_100_700",
+    "midlow_700_1000",
+    "midhigh_1000_1300",
+    "highlow_1300_1650",
+    "high_1650_2000"
+  ],
+  "segment_bounds": [
+    [
+      100.0,
+      700.0
+    ],
+    [
+      700.0,
+      1000.0
+    ],
+    [
+      1000.0,
+      1300.0
+    ],
+    [
+      1300.0,
+      1650.0
+    ],
+    [
+      1650.0,
+      2000.0
+    ]
+  ],
+  "training_args": {
+    "dataset_file": "C:\\Users\\liuzi\\OneDrive\\Master Thesis\\Fibers\\surrogate_model\\symbolic_regression\\generated_data\\Wool_symbolic_dataset.mat",
+    "output_root": "C:\\Users\\liuzi\\AppData\\Local\\Temp\\fibers_symbolic_pysr_runs",
+    "output_dir": "C:\\Users\\liuzi\\AppData\\Local\\Temp\\fibers_symbolic_pysr_runs\\20260718_155023_iter100_pop12_ps100_size28_allrows_five_segments_iter100_pop12_ps100_size28",
+    "run_name": "five_segments_iter100_pop12_ps100_size28",
+    "random_seed": 42,
+    "test_size": 0.2,
+    "max_samples_per_segment": null,
+    "niterations": 100,
+    "populations": 12,
+    "population_size": 100,
+    "maxsize": 28,
+    "model_selection": "best",
+    "procs": 0,
+    "julia_exe": "C:\\Users\\liuzi\\.julia\\juliaup\\julia-1.11.9+0.x64.w64.mingw32\\bin\\julia.exe",
+    "overwrite": false
+  }
+}

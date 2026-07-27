@@ -1,0 +1,27 @@
+Symbolic Dataset Inspection Report
+Fiber: Wool
+Curve Samples: 50
+Symbolic Samples: 3200
+Features: 8
+Frequency Range: 100.00 Hz to 2000.00 Hz
+
+Feature Summary
+phi | min=9.200000e-01 | max=9.200000e-01 | mean=9.200000e-01 | std=8.883172e-15
+h | min=3.000000e-02 | max=3.000000e-02 | mean=3.000000e-02 | std=1.908494e-16
+sigma | min=1.528640e+04 | max=9.379966e+04 | mean=5.496876e+04 | std=2.289023e+04
+alpha_infinity | min=1.015585e+00 | max=2.076828e+00 | mean=1.541393e+00 | std=3.127161e-01
+lambda | min=4.126670e-05 | max=1.452002e-04 | mean=9.403574e-05 | std=3.073531e-05
+lambda_prime | min=8.249352e-05 | max=2.908005e-04 | mean=1.880170e-04 | std=6.131904e-05
+k0_prime | min=2.509510e-10 | max=9.859693e-09 | mean=5.052109e-09 | std=2.853973e-09
+f | min=1.000000e+02 | max=2.000000e+03 | mean=1.050000e+03 | std=5.572079e+02
+
+Target Summary
+Alpha min  : 1.896394e-02
+Alpha max  : 9.998602e-01
+Alpha mean : 6.120125e-01
+Alpha std  : 2.547720e-01
+
+Segment Summary
+low_100_700 | count=1000 | f_min=100.00 | f_max=673.02 | alpha_mean=2.892560e-01 | alpha_std=1.583888e-01
+mid_700_1300 | count=1000 | f_min=703.17 | f_max=1276.19 | alpha_mean=6.701865e-01 | alpha_std=9.252309e-02
+high_1300_2000 | count=1200 | f_min=1306.35 | f_max=2000.00 | alpha_mean=8.324979e-01 | alpha_std=8.237888e-02

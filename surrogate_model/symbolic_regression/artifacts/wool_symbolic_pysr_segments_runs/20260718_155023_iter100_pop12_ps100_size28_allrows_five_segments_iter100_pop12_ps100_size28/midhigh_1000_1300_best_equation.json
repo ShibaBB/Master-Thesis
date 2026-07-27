@@ -1,0 +1,27 @@
+{
+  "segment_id": 3,
+  "segment_name": "midhigh_1000_1300",
+  "lower_hz": 1000.0,
+  "upper_hz": 1300.0,
+  "equation": "((f * 0.00035354475) + (0.260369 - sqrt(lambda_var / 0.02319787))) + (alpha_infinity * (0.121990345 - ((sigma * 1.0190168e-11) * sigma)))",
+  "complexity": 20,
+  "loss": 0.001110767,
+  "score": 0.11768221935335561,
+  "n_rows_used": 10000,
+  "n_train": 8000,
+  "n_test": 2000,
+  "train_metrics": {
+    "rmse": 0.033328173456284034,
+    "mae": 0.02395782494693497,
+    "max_abs_error": 0.16378008947262457,
+    "r2": 0.7594284505893223
+  },
+  "test_metrics": {
+    "rmse": 0.03326409923011843,
+    "mae": 0.024096787722925294,
+    "max_abs_error": 0.12951436742089895,
+    "r2": 0.7477566257248258
+  },
+  "equations_csv": "C:\\Users\\liuzi\\AppData\\Local\\Temp\\fibers_symbolic_pysr_runs\\20260718_155023_iter100_pop12_ps100_size28_allrows_five_segments_iter100_pop12_ps100_size28\\equations\\midhigh_1000_1300_equations.csv",
+  "model_file": "C:\\Users\\liuzi\\AppData\\Local\\Temp\\fibers_symbolic_pysr_runs\\20260718_155023_iter100_pop12_ps100_size28_allrows_five_segments_iter100_pop12_ps100_size28\\models\\midhigh_1000_1300_pysr_model.pkl"
+}

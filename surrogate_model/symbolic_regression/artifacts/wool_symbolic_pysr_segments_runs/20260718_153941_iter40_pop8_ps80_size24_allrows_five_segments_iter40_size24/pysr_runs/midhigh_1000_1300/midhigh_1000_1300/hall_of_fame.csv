@@ -1,0 +1,12 @@
+Complexity,Loss,Equation
+1,0.0046172002,"0.7357453"
+3,0.004561853,"f * 0.00064335926"
+5,0.003810372,"1.1070877 - (421.0136 / f)"
+7,0.0037922221,"0.82842845 - ((h + -0.02999791) * sigma)"
+8,0.0033831224,"0.888448 - ((h + -0.029327841) * sqrt(sigma))"
+9,0.002919017,"0.8215952 - ((h + -0.029997652) * (sigma / alpha_infinity))"
+12,0.0026687824,"(0.7603977 - ((h + -0.02931524) * sqrt(sigma))) - (alpha_infinity * -0.08451252)"
+14,0.0024796822,"(0.7611788 - (sqrt(sigma * sqrt(lambda_var)) * 0.0069841444)) - (log(phi) * alpha_infinity)"
+16,0.0024795418,"((0.7611788 - (sqrt(sigma * sqrt(lambda_var)) * 0.0069841444)) - (log(phi) * alpha_infinity)) - lambda_prime"
+17,0.0023731163,"(0.5792439 - ((log(alpha_infinity) + (log(sigma * lambda_var) * alpha_infinity)) * 0.040635884)) - (alpha_infinity * -0.17150792)"
+18,0.0023281097,"(0.43741494 - (log(log(alpha_infinity) + (lambda_var * sigma)) * (log(alpha_infinity) * 0.16115548))) - (alpha_infinity * -0.26200137)"

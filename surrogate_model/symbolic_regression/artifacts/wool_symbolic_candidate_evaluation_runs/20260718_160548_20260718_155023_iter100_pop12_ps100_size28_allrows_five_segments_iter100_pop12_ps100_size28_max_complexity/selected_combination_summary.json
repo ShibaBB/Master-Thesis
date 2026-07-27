@@ -1,0 +1,38 @@
+{
+  "dataset_file": "C:\\Users\\liuzi\\OneDrive\\Master Thesis\\Fibers\\surrogate_model\\symbolic_regression\\generated_data\\Wool_symbolic_dataset.mat",
+  "training_dir": "surrogate_model\\symbolic_regression\\artifacts\\wool_symbolic_pysr_segments_runs\\20260718_155023_iter100_pop12_ps100_size28_allrows_five_segments_iter100_pop12_ps100_size28",
+  "selection_rule": "max_complexity",
+  "selected_candidates": {
+    "low_100_700": 8,
+    "midlow_700_1000": 10,
+    "midhigh_1000_1300": 9,
+    "highlow_1300_1650": 11,
+    "high_1650_2000": 9
+  },
+  "feature_names": [
+    "phi",
+    "h",
+    "sigma",
+    "alpha_infinity",
+    "lambda",
+    "lambda_prime",
+    "k0_prime",
+    "f"
+  ],
+  "pysr_variable_names": [
+    "phi",
+    "h",
+    "sigma",
+    "alpha_infinity",
+    "lambda_var",
+    "lambda_prime",
+    "k0_prime",
+    "f"
+  ],
+  "overall_metrics": {
+    "rmse": 0.0314109340138552,
+    "mae": 0.021961344738393212,
+    "max_abs_error": 0.20731394872011788,
+    "r2": 0.9851431527998655
+  }
+}

@@ -1,0 +1,4 @@
+Complexity,Loss,Equation
+2,410.71573,"sqrt(f)"
+3,0.086020984,"log(sqrt(1.1841365))"
+5,0.05853908,"phi / log(log(f))"

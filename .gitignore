@@ -1,0 +1,16 @@
+# Python and Julia environments
+surrogate_model/symbolic_regression/.venv/
+surrogate_model/symbolic_regression/.venv_py311/
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# MATLAB autosave and transient files
+*.asv
+*.m~
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+

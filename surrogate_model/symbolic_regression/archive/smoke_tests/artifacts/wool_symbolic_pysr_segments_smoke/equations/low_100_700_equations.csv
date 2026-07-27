@@ -1,0 +1,4 @@
+complexity,loss,equation,score,sympy_format,lambda_format
+3,0.0718429,log(sqrt(1.1841365)),0.0,0.0845069084894609,PySRFunction(X=>0.0845069084894609)
+6,0.027253913,(lambda_prime + 0.35565013) - sqrt(lambda_var),0.3230948945106444,lambda_prime - sqrt(lambda_var) + 0.35565013,PySRFunction(X=>lambda_prime - sqrt(lambda_var) + 0.35565013)
+8,0.025175288,(-0.92947906 * (lambda_prime + -0.33509263)) - sqrt(lambda_var),0.03966711433540772,-0.92947906*lambda_prime - sqrt(lambda_var) + 0.311461582745328,PySRFunction(X=>-0.92947906*lambda_prime - sqrt(lambda_var) + 0.311461582745328)

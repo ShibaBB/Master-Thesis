@@ -1,0 +1,5 @@
+Complexity,Loss,Equation
+2,0.10733789,"sqrt(lambda_prime)"
+3,0.0718429,"log(sqrt(1.1841365))"
+4,0.057302665,"k0_prime + sqrt(0.23044801)"
+5,0.03848718,"lambda_var + sqrt(sqrt(h))"
