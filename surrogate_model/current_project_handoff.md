@@ -391,7 +391,7 @@ surrogate_model/datasets/run2/segmented_SR/Wool_symbolic_segmented.mat
 Latest completed full segmented SR training run:
 
 ```text
-surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_pysr_runs/20260803_run2_iter100_pop12_ps100_size28_allrows_serial
+surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_pysr_runs/20260803_run2_iface_full
 ```
 
 Configuration:
@@ -410,11 +410,11 @@ Training summary:
 
 ```text
 segment              complexity   test_rmse   test_mae   test_r2
-low_100_700           9           0.024487    0.019165   0.975889
-midlow_700_1000      11           0.041267    0.031010   0.621201
-midhigh_1000_1300    20           0.040706    0.029014   0.621989
-highlow_1300_1650    11           0.026529    0.018571   0.891821
-high_1650_2000        9           0.022580    0.015767   0.924273
+low_100_700          16           0.020634    0.015765   0.982880
+midlow_700_1000      20           0.035650    0.027242   0.717309
+midhigh_1000_1300    20           0.034049    0.024614   0.735508
+highlow_1300_1650    14           0.024609    0.017281   0.906919
+high_1650_2000       13           0.019416    0.013959   0.944005
 ```
 
 ### Latest Segmented SR Evaluation
@@ -422,13 +422,13 @@ high_1650_2000        9           0.022580    0.015767   0.924273
 Latest complete evaluation run:
 
 ```text
-surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_candidate_evaluation_runs/20260803_run2_maxc16
+surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_candidate_evaluation_runs/20260803_run2_iface_maxc16
 ```
 
 This evaluation was produced successfully on the local hard-drive clone from
-the full run2 training run listed above. It is currently local and uncommitted.
-Draft PR #1 contains the earlier reproduced run1 evaluation, not this run2
-training/evaluation.
+the full run2 training run listed above. Its analysis-ready artifacts are
+included in the latest local commit; the branch may still need to be pushed
+before another computer or draft PR #1 can see them.
 
 Selection rule:
 
@@ -442,19 +442,19 @@ equations CSV. Candidate index and expression complexity are different fields:
 ```text
 segment              candidate_index   complexity
 low_100_700          13                16
-midlow_700_1000      12                15
-midhigh_1000_1300    11                16
-highlow_1300_1650    12                16
-high_1650_2000       13                16
+midlow_700_1000      12                16
+midhigh_1000_1300    12                15
+highlow_1300_1650    13                16
+high_1650_2000       11                15
 ```
 
 Overall selected-formula metrics:
 
 ```text
-RMSE          0.0308636213
-MAE           0.0217497072
-max_abs_error 0.2688322725
-R2            0.9854427600
+RMSE          0.0274685145
+MAE           0.0194199672
+max_abs_error 0.2047642883
+R2            0.9884693013
 ```
 
 This `max_complexity=16` evaluation is the current recommended segmented SR
@@ -462,6 +462,39 @@ result for run2 interpretation and reporting. The earlier run1 evaluation had
 RMSE `0.0285096442`, MAE `0.0198104144`, and R2 `0.9875635954`; it remains a
 historical within-run result and must not be substituted into a run2 horizontal
 comparison.
+
+This run was also the first full end-to-end validation of the shared segmented
+dataset-run interface. Both training and evaluation resolved `run2` from
+`dataset_run_config.json`, recorded `dataset_run: run2`, and passed the
+training/evaluation metadata consistency check. All 96 candidate formulas
+evaluated successfully.
+
+Evaluation now applies output clipping to every candidate and selected formula:
+`alpha_final = clip(alpha_raw, 0, 1)`. Candidate selection, reported metrics,
+figures, and boundary diagnostics all use the clipped predictions. For this
+run, the raw range was `-0.034435` to `1.072190`; 316 of 64000 predictions
+(`0.49375%`) were clipped, and the final range is exactly `[0,1]`. Raw and
+clipped diagnostics are both retained in `selected_combination_summary.json`.
+The largest mean boundary excess change occurs near `1000 Hz` (`0.037185`),
+followed by `700 Hz` (`0.034214`). These boundary effects are model-quality
+limitations caused by independent segment formulas, not dataset-run interface
+failures. Detailed values are also stored in `boundary_transition_metrics.csv`.
+
+The first validation attempt used an automatically generated directory whose
+deepest PySR path reached 265 characters and failed while Julia was opening
+`hall_of_fame.csv`. The incomplete trace directory is:
+
+```text
+surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_pysr_runs/20260803_115855_run2_iter100_pop12_ps100_size28_allrows_interface_validation_full_serial
+```
+
+The training entry point was then hardened to use shorter automatic names,
+preflight Windows nested-path length, pass Julia forward-slash paths, prefer
+the project-venv Julia executable, and use deterministic serial PySR settings.
+The successful full run used the short explicit output directory above. The
+deterministic/serial follow-up was verified with a five-segment smoke run under
+the ignored `artifacts/_scratch` tree; the full run itself completed before the
+deterministic flag was added, so an exact bit-for-bit retrain is not guaranteed.
 
 ### Local Environment And Smoke-Test Status
 
@@ -777,8 +810,13 @@ completed run2 work included in the next/current local commit:
   surrogate_model/datasets/run2/
   surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_pysr_runs/20260803_run2_iter100_pop12_ps100_size28_allrows_serial/
   surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_candidate_evaluation_runs/20260803_run2_maxc16/
+latest curated interface-validation artifacts included in the current local commit:
+  segmented training: 20260803_run2_iface_full/
+  segmented evaluation: 20260803_run2_iface_maxc16/
 remaining untracked local content intentionally excluded from commits:
   surrogate_model/symbolic_regression/ (temporary smoke output only)
+  incomplete long-path attempt: 20260803_115855_run2_iter100_pop12_ps100_size28_allrows_interface_validation_full_serial/
+  raw pysr_runs/ output and models/*.pkl from 20260803_run2_iface_full/
 ```
 
 If a future conversation starts from this handoff, first run:

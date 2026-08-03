@@ -1,0 +1,27 @@
+{
+  "segment_id": 2,
+  "segment_name": "midlow_700_1000",
+  "lower_hz": 700.0,
+  "upper_hz": 1000.0,
+  "equation": "log(log(log(sigma)) - (576.0282 / f)) - (alpha_infinity * ((-6.644685e-6 / ((k0_prime * sigma) + lambda_var)) - 0.032786235))",
+  "complexity": 20,
+  "loss": 0.0011531182,
+  "score": 0.19338315080558363,
+  "n_rows_used": 10000,
+  "n_train": 8000,
+  "n_test": 2000,
+  "train_metrics": {
+    "rmse": 0.033957596703652455,
+    "mae": 0.026134691967791432,
+    "max_abs_error": 0.2112518409898565,
+    "r2": 0.7185512736921835
+  },
+  "test_metrics": {
+    "rmse": 0.03564984583987431,
+    "mae": 0.027241850313951467,
+    "max_abs_error": 0.198340108712744,
+    "r2": 0.7173090572778762
+  },
+  "equations_csv": "surrogate_model\\segmented_symbolic_regression\\artifacts\\wool_segmented_symbolic_pysr_runs\\20260803_run2_iface_full\\equations\\midlow_700_1000_equations.csv",
+  "model_file": "surrogate_model\\segmented_symbolic_regression\\artifacts\\wool_segmented_symbolic_pysr_runs\\20260803_run2_iface_full\\models\\midlow_700_1000_pysr_model.pkl"
+}

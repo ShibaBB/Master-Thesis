@@ -35,6 +35,8 @@ from segmented_run_paths import (
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_TRAINING_ROOT = SCRIPT_DIR / "artifacts" / "wool_segmented_symbolic_pysr_runs"
 DEFAULT_OUTPUT_ROOT = SCRIPT_DIR / "artifacts" / "wool_segmented_symbolic_candidate_evaluation_runs"
+OUTPUT_LOWER_BOUND = 0.0
+OUTPUT_UPPER_BOUND = 1.0
 
 
 def parse_args() -> argparse.Namespace:
@@ -243,6 +245,19 @@ def regression_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, floa
     }
 
 
+def clip_predictions(y_pred: np.ndarray) -> np.ndarray:
+    return np.clip(y_pred, OUTPUT_LOWER_BOUND, OUTPUT_UPPER_BOUND)
+
+
+def count_values_clipped(y_pred: np.ndarray) -> int:
+    return int(
+        np.sum(
+            np.isfinite(y_pred)
+            & ((y_pred < OUTPUT_LOWER_BOUND) | (y_pred > OUTPUT_UPPER_BOUND))
+        )
+    )
+
+
 def build_predictor(expression: str, variable_names: list[str]) -> Any:
     symbols = sp.symbols(variable_names)
     local_dict = {name: symbol for name, symbol in zip(variable_names, symbols)}
@@ -288,13 +303,20 @@ def evaluate_segment_candidates(
         candidate_index = int(equation_row["candidate_index"])
         expression = str(equation_row["expression_for_eval"])
         try:
-            y_pred = predict_expression(expression, X_seg, variable_names)
+            raw_y_pred = predict_expression(expression, X_seg, variable_names)
+            y_pred = clip_predictions(raw_y_pred)
             metrics = regression_metrics(y_seg, y_pred)
             status = "ok"
             predictions[candidate_index] = y_pred
+            raw_prediction_min = float(np.min(raw_y_pred))
+            raw_prediction_max = float(np.max(raw_y_pred))
+            num_clipped = count_values_clipped(raw_y_pred)
         except Exception as exc:  # Keep evaluating other candidates.
             metrics = {"rmse": math.inf, "mae": math.inf, "max_abs_error": math.inf, "r2": -math.inf}
             status = f"failed: {exc}"
+            raw_prediction_min = math.nan
+            raw_prediction_max = math.nan
+            num_clipped = 0
 
         rows.append(
             {
@@ -307,6 +329,9 @@ def evaluate_segment_candidates(
                 "equation": str(equation_row["equation"]),
                 "expression_for_eval": expression,
                 "eval_status": status,
+                "raw_prediction_min": raw_prediction_min,
+                "raw_prediction_max": raw_prediction_max,
+                "num_clipped": num_clipped,
                 **metrics,
             }
         )
@@ -450,7 +475,8 @@ def evaluate_selected_combination(
     metrics: pd.DataFrame,
     selected: dict[str, int],
     variable_names: list[str],
-) -> tuple[np.ndarray, pd.DataFrame]:
+) -> tuple[np.ndarray, np.ndarray, pd.DataFrame]:
+    raw_y_pred_all = np.full_like(data["y"], np.nan, dtype=float)
     y_pred_all = np.full_like(data["y"], np.nan, dtype=float)
     selected_rows: list[dict[str, Any]] = []
 
@@ -461,11 +487,75 @@ def evaluate_selected_combination(
             & (metrics["candidate_index"] == candidate_index)
         ].iloc[0]
         mask = data["segment_index"] == segment_id
-        y_pred_all[mask] = predict_expression(row["expression_for_eval"], data["X"][mask], variable_names)
+        raw_prediction = predict_expression(
+            row["expression_for_eval"], data["X"][mask], variable_names
+        )
+        raw_y_pred_all[mask] = raw_prediction
+        y_pred_all[mask] = clip_predictions(raw_prediction)
         selected_rows.append(row.to_dict())
 
     selected_df = pd.DataFrame(selected_rows)
-    return y_pred_all, selected_df
+    return raw_y_pred_all, y_pred_all, selected_df
+
+
+def prediction_diagnostics(y_pred: np.ndarray) -> dict[str, float | int]:
+    below_zero = y_pred < 0.0
+    above_one = y_pred > 1.0
+    return {
+        "prediction_min": float(np.min(y_pred)),
+        "prediction_max": float(np.max(y_pred)),
+        "count_below_zero": int(np.sum(below_zero)),
+        "count_above_one": int(np.sum(above_one)),
+        "fraction_outside_0_1": float(np.mean(below_zero | above_one)),
+    }
+
+
+def boundary_transition_diagnostics(
+    data: dict[str, Any], y_pred: np.ndarray
+) -> pd.DataFrame:
+    rows: list[dict[str, Any]] = []
+    curve_ids = np.unique(data["source_curve_index"])
+    frequency = data["X"][:, -1]
+
+    for left_segment_id in range(1, len(data["segment_names"])):
+        right_segment_id = left_segment_id + 1
+        prediction_changes: list[float] = []
+        teacher_changes: list[float] = []
+
+        for curve_id in curve_ids:
+            curve_mask = data["source_curve_index"] == curve_id
+            left_indices = np.flatnonzero(
+                curve_mask & (data["segment_index"] == left_segment_id)
+            )
+            right_indices = np.flatnonzero(
+                curve_mask & (data["segment_index"] == right_segment_id)
+            )
+            if left_indices.size == 0 or right_indices.size == 0:
+                continue
+
+            left_index = left_indices[np.argmax(frequency[left_indices])]
+            right_index = right_indices[np.argmin(frequency[right_indices])]
+            prediction_changes.append(float(y_pred[right_index] - y_pred[left_index]))
+            teacher_changes.append(float(data["y"][right_index] - data["y"][left_index]))
+
+        prediction_array = np.asarray(prediction_changes)
+        teacher_array = np.asarray(teacher_changes)
+        excess_change = prediction_array - teacher_array
+        rows.append(
+            {
+                "left_segment": data["segment_names"][left_segment_id - 1],
+                "right_segment": data["segment_names"][right_segment_id - 1],
+                "boundary_hz": float(data["segment_bounds"][left_segment_id - 1][1]),
+                "num_curves": int(prediction_array.size),
+                "mean_abs_prediction_change": float(np.mean(np.abs(prediction_array))),
+                "max_abs_prediction_change": float(np.max(np.abs(prediction_array))),
+                "mean_abs_teacher_change": float(np.mean(np.abs(teacher_array))),
+                "mean_abs_excess_change": float(np.mean(np.abs(excess_change))),
+                "max_abs_excess_change": float(np.max(np.abs(excess_change))),
+            }
+        )
+
+    return pd.DataFrame(rows)
 
 
 def main() -> None:
@@ -498,19 +588,36 @@ def main() -> None:
     plot_complexity_vs_error(metrics, figures_dir)
 
     selected = choose_candidates(metrics, args)
-    y_pred_all, selected_df = evaluate_selected_combination(data, metrics, selected, variable_names)
+    raw_y_pred_all, y_pred_all, selected_df = evaluate_selected_combination(
+        data, metrics, selected, variable_names
+    )
     selected_df.to_csv(args.output_dir / "selected_candidates.csv", index=False)
 
     selected_metrics = regression_metrics(data["y"], y_pred_all)
+    raw_physical_diagnostics = prediction_diagnostics(raw_y_pred_all)
+    physical_diagnostics = prediction_diagnostics(y_pred_all)
+    boundary_diagnostics = boundary_transition_diagnostics(data, y_pred_all)
+    boundary_diagnostics.to_csv(
+        args.output_dir / "boundary_transition_metrics.csv", index=False
+    )
     selected_summary = {
         "dataset_file": str(args.dataset_file),
         "dataset_run": resolved_dataset_run,
         "training_dir": str(args.training_dir),
         "selection_rule": args.selection_rule,
+        "output_postprocessing": {
+            "method": "clip",
+            "lower_bound": OUTPUT_LOWER_BOUND,
+            "upper_bound": OUTPUT_UPPER_BOUND,
+            "num_values_clipped": count_values_clipped(raw_y_pred_all),
+        },
         "selected_candidates": selected,
         "feature_names": data["feature_names"],
         "pysr_variable_names": variable_names,
         "overall_metrics": selected_metrics,
+        "raw_prediction_diagnostics": raw_physical_diagnostics,
+        "prediction_diagnostics": physical_diagnostics,
+        "boundary_transition_diagnostics": boundary_diagnostics.to_dict(orient="records"),
     }
     with (args.output_dir / "selected_combination_summary.json").open("w", encoding="utf-8") as file:
         json.dump(selected_summary, file, indent=2)
@@ -528,6 +635,14 @@ def main() -> None:
         f"RMSE={selected_metrics['rmse']:.6f}, "
         f"MAE={selected_metrics['mae']:.6f}, "
         f"R2={selected_metrics['r2']:.6f}"
+    )
+    print(
+        "Prediction diagnostics: "
+        f"raw_range=[{raw_physical_diagnostics['prediction_min']:.6f}, "
+        f"{raw_physical_diagnostics['prediction_max']:.6f}], "
+        f"clipped_values={count_values_clipped(raw_y_pred_all)}, "
+        f"final_range=[{physical_diagnostics['prediction_min']:.6f}, "
+        f"{physical_diagnostics['prediction_max']:.6f}]"
     )
     print(f"Figures saved to: {figures_dir}")
 

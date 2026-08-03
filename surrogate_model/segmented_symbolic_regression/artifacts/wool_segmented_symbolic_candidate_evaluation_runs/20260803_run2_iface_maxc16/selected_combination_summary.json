@@ -1,0 +1,105 @@
+{
+  "dataset_file": "C:\\MasterThesis_Project\\surrogate_model\\datasets\\run2\\segmented_SR\\Wool_symbolic_segmented.mat",
+  "dataset_run": "run2",
+  "training_dir": "surrogate_model\\segmented_symbolic_regression\\artifacts\\wool_segmented_symbolic_pysr_runs\\20260803_run2_iface_full",
+  "selection_rule": "max_complexity",
+  "output_postprocessing": {
+    "method": "clip",
+    "lower_bound": 0.0,
+    "upper_bound": 1.0,
+    "num_values_clipped": 316
+  },
+  "selected_candidates": {
+    "low_100_700": 13,
+    "midlow_700_1000": 12,
+    "midhigh_1000_1300": 12,
+    "highlow_1300_1650": 13,
+    "high_1650_2000": 11
+  },
+  "feature_names": [
+    "phi",
+    "h",
+    "sigma",
+    "alpha_infinity",
+    "lambda",
+    "lambda_prime",
+    "k0_prime",
+    "f"
+  ],
+  "pysr_variable_names": [
+    "phi",
+    "h",
+    "sigma",
+    "alpha_infinity",
+    "lambda_var",
+    "lambda_prime",
+    "k0_prime",
+    "f"
+  ],
+  "overall_metrics": {
+    "rmse": 0.02746851451146615,
+    "mae": 0.019419967204845897,
+    "max_abs_error": 0.2047642883332066,
+    "r2": 0.9884693012583422
+  },
+  "raw_prediction_diagnostics": {
+    "prediction_min": -0.03443513701148804,
+    "prediction_max": 1.0721903141483133,
+    "count_below_zero": 178,
+    "count_above_one": 138,
+    "fraction_outside_0_1": 0.0049375
+  },
+  "prediction_diagnostics": {
+    "prediction_min": 0.0,
+    "prediction_max": 1.0,
+    "count_below_zero": 0,
+    "count_above_one": 0,
+    "fraction_outside_0_1": 0.0
+  },
+  "boundary_transition_diagnostics": [
+    {
+      "left_segment": "low_100_700",
+      "right_segment": "midlow_700_1000",
+      "boundary_hz": 700.0,
+      "num_curves": 1000,
+      "mean_abs_prediction_change": 0.03615705730704893,
+      "max_abs_prediction_change": 0.16175463614181151,
+      "mean_abs_teacher_change": 0.018872367092844768,
+      "mean_abs_excess_change": 0.034214477397426175,
+      "max_abs_excess_change": 0.12490172115140274
+    },
+    {
+      "left_segment": "midlow_700_1000",
+      "right_segment": "midhigh_1000_1300",
+      "boundary_hz": 1000.0,
+      "num_curves": 1000,
+      "mean_abs_prediction_change": 0.043651868560494335,
+      "max_abs_prediction_change": 0.13811611017892977,
+      "mean_abs_teacher_change": 0.012276572134677604,
+      "mean_abs_excess_change": 0.037184835934877696,
+      "max_abs_excess_change": 0.11734051024598646
+    },
+    {
+      "left_segment": "midhigh_1000_1300",
+      "right_segment": "highlow_1300_1650",
+      "boundary_hz": 1300.0,
+      "num_curves": 1000,
+      "mean_abs_prediction_change": 0.02235469914284752,
+      "max_abs_prediction_change": 0.07304190367659813,
+      "mean_abs_teacher_change": 0.0073587310737043355,
+      "mean_abs_excess_change": 0.02054509110831321,
+      "max_abs_excess_change": 0.06807177592675451
+    },
+    {
+      "left_segment": "highlow_1300_1650",
+      "right_segment": "high_1650_2000",
+      "boundary_hz": 1650.0,
+      "num_curves": 1000,
+      "mean_abs_prediction_change": 0.02390956189914777,
+      "max_abs_prediction_change": 0.08320797409114344,
+      "mean_abs_teacher_change": 0.0036085520775860553,
+      "mean_abs_excess_change": 0.022041510207165115,
+      "max_abs_excess_change": 0.07589192895316133
+    }
+  ]
+}

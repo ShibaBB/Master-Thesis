@@ -27,7 +27,16 @@ from segmented_run_paths import default_dataset_run, resolve_dataset_file
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_OUTPUT_ROOT = SCRIPT_DIR / "artifacts" / "wool_segmented_symbolic_pysr_runs"
-DEFAULT_JULIA_EXE = (
+VENV_JULIA_EXE = (
+    SCRIPT_DIR
+    / ".venv_py311"
+    / "julia_env"
+    / "pyjuliapkg"
+    / "install"
+    / "bin"
+    / "julia.exe"
+)
+USER_JULIA_EXE = (
     Path.home()
     / ".julia"
     / "juliaup"
@@ -35,6 +44,7 @@ DEFAULT_JULIA_EXE = (
     / "bin"
     / "julia.exe"
 )
+DEFAULT_JULIA_EXE = VENV_JULIA_EXE if VENV_JULIA_EXE.exists() else USER_JULIA_EXE
 RESERVED_VARIABLE_NAMES = {
     "lambda",
     "Lambda",
@@ -91,7 +101,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--population-size", type=int, default=80)
     parser.add_argument("--maxsize", type=int, default=24)
     parser.add_argument("--model-selection", choices=["best", "accuracy", "score"], default="best")
-    parser.add_argument("--procs", type=int, default=0, help="PySR worker processes. 0 lets PySR choose.")
+    parser.add_argument(
+        "--procs",
+        type=int,
+        default=0,
+        help="Deprecated compatibility option. Segmented training is serial, so this value is ignored.",
+    )
     parser.add_argument("--julia-exe", type=Path, default=DEFAULT_JULIA_EXE)
     parser.add_argument(
         "--overwrite",
@@ -119,16 +134,39 @@ def resolve_output_dir(args: argparse.Namespace) -> Path:
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     sample_tag = (
-        "allrows"
+        "all"
         if args.max_samples_per_segment is None
         else f"cap{args.max_samples_per_segment}"
     )
     config_tag = (
-        f"{sanitize_name(args.dataset_run)}_iter{args.niterations}_pop{args.populations}_"
-        f"ps{args.population_size}_size{args.maxsize}_{sample_tag}"
+        f"{sanitize_name(args.dataset_run)}_i{args.niterations}_p{args.populations}_"
+        f"ps{args.population_size}_s{args.maxsize}_{sample_tag}"
     )
-    run_suffix = f"_{sanitize_name(args.run_name)}" if args.run_name.strip() else ""
+    run_label = sanitize_name(args.run_name)[:24]
+    run_suffix = f"_{run_label}" if run_label else ""
     return unique_path(args.output_root / f"{timestamp}_{config_tag}{run_suffix}")
+
+
+def validate_output_path_length(output_dir: Path, segment_names: list[str]) -> None:
+    if os.name != "nt":
+        return
+    longest_path = max(
+        (
+            output_dir
+            / "pysr_runs"
+            / sanitize_name(segment_name)
+            / sanitize_name(segment_name)
+            / "hall_of_fame.csv"
+            for segment_name in segment_names
+        ),
+        key=lambda path: len(str(path.resolve())),
+    )
+    if len(str(longest_path.resolve())) > 240:
+        raise ValueError(
+            "The PySR output path is too long for reliable Windows writes "
+            f"({len(str(longest_path.resolve()))} characters): {longest_path}. "
+            "Use --output-dir with a shorter path."
+        )
 
 
 def decode_matlab_string(file: h5py.File, value: Any) -> str:
@@ -238,15 +276,14 @@ def build_model(args: argparse.Namespace, pysr_output_dir: Path, run_id: str) ->
         "maxsize": args.maxsize,
         "model_selection": args.model_selection,
         "random_state": args.random_seed,
+        "deterministic": True,
         "parallelism": "serial",
         "progress": False,
         "verbosity": 1,
         "temp_equation_file": False,
-        "output_directory": str(pysr_output_dir),
+        "output_directory": pysr_output_dir.as_posix(),
         "run_id": run_id,
     }
-    if args.procs > 0:
-        model_kwargs["procs"] = args.procs
     return PySRRegressor(**model_kwargs)
 
 
@@ -350,8 +387,9 @@ def main() -> None:
         os.environ.setdefault("PYTHON_JULIAPKG_EXE", str(args.julia_exe))
 
     args.output_dir = resolve_output_dir(args)
-    args.output_dir.mkdir(parents=True, exist_ok=True)
     data = read_symbolic_dataset(args.dataset_file)
+    validate_output_path_length(args.output_dir, data["segment_names"])
+    args.output_dir.mkdir(parents=True, exist_ok=True)
     data["pysr_variable_names"] = make_pysr_variable_names(data["feature_names"])
 
     metadata = {

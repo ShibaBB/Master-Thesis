@@ -116,6 +116,10 @@ Evaluate candidate formulas and generate plots:
 surrogate_model/segmented_symbolic_regression/evaluate_segmented_symbolic_candidates.py
 ```
 
+Evaluation applies `clip(alpha_raw, 0, 1)` to every candidate prediction before
+candidate selection, metrics, plots, and boundary diagnostics. The summary
+retains both raw and clipped prediction diagnostics for traceability.
+
 Early smoke-test drivers and environment checks have been archived here:
 
 ```text
@@ -449,6 +453,7 @@ The evaluation script exports:
 candidate_metrics.csv
 selected_candidates.csv
 selected_combination_summary.json
+boundary_transition_metrics.csv
 figures/<segment>_complexity_vs_rmse.png
 figures/selected_predicted_vs_true.png
 figures/selected_error_vs_frequency.png
