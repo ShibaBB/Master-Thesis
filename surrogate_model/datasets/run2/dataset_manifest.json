@@ -1,0 +1,52 @@
+{
+  "run_id": "run2",
+  "description": "Second shared dataset run for comparing MLP, segmented symbolic regression, and global symbolic regression.",
+  "generation": {
+    "material": "Wool",
+    "porosity_cases": ["92"],
+    "sampling_method": "lhs",
+    "random_seed": 43,
+    "generated_on": "2026-08-03"
+  },
+  "teacher_dataset": {
+    "model_branch": "MLP",
+    "path": "surrogate_model/datasets/run2/MLP/Wool_surrogate_dataset.mat",
+    "format": "curve",
+    "inputs": ["phi", "h", "sigma", "alpha_infinity", "lambda", "lambda_prime", "k0_prime"],
+    "output": "alpha curve on freq_grid",
+    "curve_samples": 1000,
+    "frequency_points": 64,
+    "frequency_range_hz": [100, 2000]
+  },
+  "derived_datasets": [
+    {
+      "model_branch": "segmented_SR",
+      "path": "surrogate_model/datasets/run2/segmented_SR/Wool_symbolic_segmented.mat",
+      "source_teacher_dataset": "surrogate_model/datasets/run2/MLP/Wool_surrogate_dataset.mat",
+      "format": "scalar_frequency_expanded",
+      "inputs": ["phi", "h", "sigma", "alpha_infinity", "lambda", "lambda_prime", "k0_prime", "f"],
+      "output": "alpha",
+      "scalar_samples": 64000,
+      "segments_hz": [
+        {"name": "low_100_700", "bounds": [100, 700]},
+        {"name": "midlow_700_1000", "bounds": [700, 1000]},
+        {"name": "midhigh_1000_1300", "bounds": [1000, 1300]},
+        {"name": "highlow_1300_1650", "bounds": [1300, 1650]},
+        {"name": "high_1650_2000", "bounds": [1650, 2000]}
+      ]
+    },
+    {
+      "model_branch": "global_SR",
+      "path": "surrogate_model/datasets/run2/global_SR/Wool_symbolic_global.mat",
+      "source_teacher_dataset": "surrogate_model/datasets/run2/MLP/Wool_surrogate_dataset.mat",
+      "format": "scalar_frequency_expanded",
+      "inputs": ["phi", "h", "sigma", "alpha_infinity", "lambda", "lambda_prime", "k0_prime", "f"],
+      "output": "alpha",
+      "scalar_samples": 64000,
+      "segments_hz": [
+        {"name": "global_100_2000", "bounds": [100, 2000]}
+      ]
+    }
+  ],
+  "comparison_rule": "Use only datasets within the same run_id for horizontal comparison."
+}

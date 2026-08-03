@@ -25,11 +25,14 @@ The planned horizontal comparison has three model branches:
 ```
 
 All three branches must use data from the same dataset run for a fair
-comparison. The current shared dataset run is:
+comparison. The current shared dataset run is now:
 
 ```text
-surrogate_model/datasets/run1
+surrogate_model/datasets/run2
 ```
+
+`run1` remains in the repository as the earlier baseline dataset run. Do not
+mix run1-trained models with run2-trained models in one horizontal comparison.
 
 ## Repository Location And Remote
 
@@ -46,10 +49,17 @@ GitHub remote:
 https://github.com/ShibaBB/Master-Thesis
 ```
 
-Current branch:
+Current working branch as last verified on 2026-08-03:
 
 ```text
-main
+agent/add-segmented-evaluation
+```
+
+The repository default branch remains `main`. The current working branch adds
+the latest formal segmented SR evaluation and is published in draft PR #1:
+
+```text
+https://github.com/ShibaBB/Master-Thesis/pull/1
 ```
 
 Current synchronization logic:
@@ -76,6 +86,8 @@ surrogate_model/
   data_generation/
   datasets/
     run1/
+      historical baseline dataset run
+    run2/
       dataset_manifest.json
       MLP/
         Wool_surrogate_dataset.mat
@@ -116,20 +128,23 @@ docs/
 
 ## Dataset Run Structure
 
-The current dataset run is `run1`.
+The current dataset run is `run2`. It was generated successfully on 2026-08-03
+with the same Wool/porosity/frequency configuration as run1, but with LHS
+sampling seed `43` instead of run1's seed `42`. The different seed makes run2 a
+new teacher sample rather than a byte-for-byte copy of run1.
 
 Manifest:
 
 ```text
-surrogate_model/datasets/run1/dataset_manifest.json
+surrogate_model/datasets/run2/dataset_manifest.json
 ```
 
 Run contents:
 
 ```text
-surrogate_model/datasets/run1/MLP/Wool_surrogate_dataset.mat
-surrogate_model/datasets/run1/segmented_SR/Wool_symbolic_segmented.mat
-surrogate_model/datasets/run1/global_SR/Wool_symbolic_global.mat
+surrogate_model/datasets/run2/MLP/Wool_surrogate_dataset.mat
+surrogate_model/datasets/run2/segmented_SR/Wool_symbolic_segmented.mat
+surrogate_model/datasets/run2/global_SR/Wool_symbolic_global.mat
 ```
 
 Comparison rule:
@@ -145,7 +160,7 @@ another dataset run.
 Teacher dataset file:
 
 ```text
-surrogate_model/datasets/run1/MLP/Wool_surrogate_dataset.mat
+surrogate_model/datasets/run2/MLP/Wool_surrogate_dataset.mat
 ```
 
 Format:
@@ -178,7 +193,7 @@ Frequency range:
 Segmented SR dataset file:
 
 ```text
-surrogate_model/datasets/run1/segmented_SR/Wool_symbolic_segmented.mat
+surrogate_model/datasets/run2/segmented_SR/Wool_symbolic_segmented.mat
 ```
 
 Format:
@@ -220,7 +235,7 @@ high_1650_2000     1650-2000 Hz
 Global SR dataset file:
 
 ```text
-surrogate_model/datasets/run1/global_SR/Wool_symbolic_global.mat
+surrogate_model/datasets/run2/global_SR/Wool_symbolic_global.mat
 ```
 
 Format:
@@ -288,8 +303,10 @@ surrogate_model/MLP
 Current status:
 
 ```text
-Only a small baseline artifact exists.
-It is not yet a formal horizontal comparison result.
+The run2 MLP teacher dataset has been generated successfully.
+No run2 MLP training was requested or performed.
+Only the older small baseline artifact exists, so there is still no formal
+run2 MLP comparison result.
 ```
 
 Known artifact:
@@ -301,7 +318,7 @@ surrogate_model/MLP/artifacts/wool_baseline_mlp_small
 The MLP branch should use:
 
 ```text
-surrogate_model/datasets/run1/MLP/Wool_surrogate_dataset.mat
+surrogate_model/datasets/run2/MLP/Wool_surrogate_dataset.mat
 ```
 
 ## Segmented Symbolic Regression Branch State
@@ -349,10 +366,11 @@ wool_symbolic_dataset_inspection
 
 ### Latest Segmented SR Dataset Generation
 
-The current segmented SR dataset in `run1` has been generated successfully:
+The current segmented SR dataset in `run2` has been generated successfully from
+the run2 teacher dataset:
 
 ```text
-surrogate_model/datasets/run1/segmented_SR/Wool_symbolic_segmented.mat
+surrogate_model/datasets/run2/segmented_SR/Wool_symbolic_segmented.mat
 ```
 
 ### Latest Full Segmented SR Training
@@ -360,7 +378,7 @@ surrogate_model/datasets/run1/segmented_SR/Wool_symbolic_segmented.mat
 Latest completed full segmented SR training run:
 
 ```text
-surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_pysr_runs/20260727_130534_iter100_pop12_ps100_size28_allrows_run1_iter100_pop12_ps100_size28_allrows_serial
+surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_pysr_runs/20260803_run2_iter100_pop12_ps100_size28_allrows_serial
 ```
 
 Configuration:
@@ -372,26 +390,32 @@ population_size = 100
 maxsize = 28
 rows used = all 64000 scalar samples
 parallelism = serial
+dataset run = run2
 ```
 
 Training summary:
 
 ```text
 segment              complexity   test_rmse   test_mae   test_r2
-low_100_700          21           0.019665    0.014653   0.984641
-midlow_700_1000       7           0.042303    0.032247   0.548369
-midhigh_1000_1300    15           0.036071    0.024451   0.687001
-highlow_1300_1650    10           0.033177    0.023955   0.819488
-high_1650_2000        9           0.021833    0.014774   0.928872
+low_100_700           9           0.024487    0.019165   0.975889
+midlow_700_1000      11           0.041267    0.031010   0.621201
+midhigh_1000_1300    20           0.040706    0.029014   0.621989
+highlow_1300_1650    11           0.026529    0.018571   0.891821
+high_1650_2000        9           0.022580    0.015767   0.924273
 ```
 
 ### Latest Segmented SR Evaluation
 
-Latest evaluation run:
+Latest complete evaluation run:
 
 ```text
-surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_candidate_evaluation_runs/20260727_134601_20260727_130534_iter100_pop12_ps100_size28_allrows_run1_iter100_pop12_ps100_size28_allrows_serial_max_complexity
+surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_candidate_evaluation_runs/20260803_run2_maxc16
 ```
+
+This evaluation was produced successfully on the local hard-drive clone from
+the full run2 training run listed above. It is currently local and uncommitted.
+Draft PR #1 contains the earlier reproduced run1 evaluation, not this run2
+training/evaluation.
 
 Selection rule:
 
@@ -399,27 +423,79 @@ Selection rule:
 max_complexity = 16
 ```
 
-Selected candidates:
+Selected candidates are identified by 1-based row/index in each segment's
+equations CSV. Candidate index and expression complexity are different fields:
 
 ```text
-low_100_700          complexity 12
-midlow_700_1000      complexity 11
-midhigh_1000_1300    complexity 12
-highlow_1300_1650    complexity 11
-high_1650_2000       complexity 11
+segment              candidate_index   complexity
+low_100_700          13                16
+midlow_700_1000      12                15
+midhigh_1000_1300    11                16
+highlow_1300_1650    12                16
+high_1650_2000       13                16
 ```
 
 Overall selected-formula metrics:
 
 ```text
-RMSE          0.0285096442
-MAE           0.0198104144
-max_abs_error 0.2480225671
-R2            0.9875635954
+RMSE          0.0308636213
+MAE           0.0217497072
+max_abs_error 0.2688322725
+R2            0.9854427600
 ```
 
 This `max_complexity=16` evaluation is the current recommended segmented SR
-result for interpretation and reporting.
+result for run2 interpretation and reporting. The earlier run1 evaluation had
+RMSE `0.0285096442`, MAE `0.0198104144`, and R2 `0.9875635954`; it remains a
+historical within-run result and must not be substituted into a run2 horizontal
+comparison.
+
+### Local Environment And Smoke-Test Status
+
+The full segmented training/evaluation pipeline has also been smoke-tested
+successfully on `C:/MasterThesis_Project`. The verified local environment is:
+
+```text
+Python 3.11.9
+PySR 1.5.10
+Julia 1.11.9, installed inside the project venv through JuliaCall/JuliaPkg
+MATLAB R2025b
+venv: surrogate_model/segmented_symbolic_regression/.venv_py311
+```
+
+The venv is ignored by Git and must be recreated on another machine. The smoke
+test verified all of the following:
+
+```text
+MATLAB teacher dataset: X = 1000 x 7, Y = 1000 x 64
+segmented scalar dataset: X = 64000 x 8, y = 64000
+all five segment names decoded correctly
+PySR successfully called Julia/SymbolicRegression.jl
+five-segment minimal training completed
+candidate evaluation and figure generation completed
+```
+
+Committed local-disk smoke artifacts are retained under:
+
+```text
+surrogate_model/segmented_symbolic_regression/archive/smoke_tests/artifacts/
+  segmented_local_disk_smoke_training_20260727_193327/
+  segmented_local_disk_smoke_evaluation_20260727_193327/
+```
+
+An additional later smoke test exists only as untracked local temporary output
+under the old path requested for that test:
+
+```text
+surrogate_model/symbolic_regression/archive/smoke_tests/artifacts/
+  current_machine_smoke_20260727_201458/
+  current_machine_smoke_20260727_201458_eval/
+```
+
+That untracked `surrogate_model/symbolic_regression` tree contains smoke output
+only. It is not an active model branch, was intentionally excluded from the
+formal evaluation commit/PR, and should not be committed or deleted without an
+explicit decision.
 
 ## Global Symbolic Regression Branch State
 
@@ -432,9 +508,10 @@ surrogate_model/global_symbolic_regression
 Current status:
 
 ```text
-Dataset generation exists.
-Dataset inspection exists.
+The run2 global scalar dataset has been generated successfully.
+Dataset generation and inspection code exist.
 Formal global PySR training/evaluation is not implemented yet.
+No run2 global training was requested or performed.
 ```
 
 Important entry points:
@@ -447,7 +524,7 @@ run_global_symbolic_dataset_inspection.m
 Current global dataset:
 
 ```text
-surrogate_model/datasets/run1/global_SR/Wool_symbolic_global.mat
+surrogate_model/datasets/run2/global_SR/Wool_symbolic_global.mat
 ```
 
 Current global inspection artifact:
@@ -472,6 +549,12 @@ surrogate_model/segmented_symbolic_regression/artifacts/
   archived_pre_segmented_rename_artifacts/
   wool_segmented_symbolic_candidate_evaluation_runs/
   wool_segmented_symbolic_pysr_runs/
+```
+
+Segmented SR smoke-test artifacts are kept separately from formal artifacts:
+
+```text
+surrogate_model/segmented_symbolic_regression/archive/smoke_tests/artifacts/
 ```
 
 If segmented dataset inspection is run again, this current-name folder may also
@@ -499,7 +582,7 @@ A full fair comparison should use only one dataset run at a time. For the
 current project state that means all model branches should read from:
 
 ```text
-surrogate_model/datasets/run1
+surrogate_model/datasets/run2
 ```
 
 Current data generation sequence:
@@ -530,7 +613,9 @@ Current segmented SR training/evaluation sequence:
 ```
 
 MLP and global SR do not yet have formal comparable training/evaluation runs.
-They should continue to read from `run1` when those pipelines are completed.
+They should read from `run2` when those pipelines are completed. The run2 MLP
+and global datasets already exist; do not regenerate them unless intentionally
+creating another dataset run.
 
 ## Git And GitHub Sync Policy
 
@@ -630,6 +715,15 @@ local setup should keep this enabled:
 git config --global core.longpaths true
 ```
 
+`core.longpaths` helps Git but does not guarantee that Python can create every
+deep output path. The evaluation script's automatic directory name can exceed
+the Windows path limit because it includes the full training-run name. If that
+happens, pass an explicit short output directory, for example:
+
+```powershell
+--output-dir surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_candidate_evaluation_runs/<timestamp>_<run_id>_maxc16
+```
+
 ## Naming And Separation Rules
 
 The old branch name:
@@ -657,15 +751,21 @@ used as active output locations.
 
 ## Current Git State
 
-The local hard-drive clone at `C:/MasterThesis_Project` was checked after the
-move from OneDrive. At that point:
+The local hard-drive clone at `C:/MasterThesis_Project` was last verified on
+2026-08-03 after completing the run2 data-generation, segmented-training, and
+evaluation workflow:
 
 ```text
-branch: main
-HEAD: 73f94e9 Organize surrogate model structure and artifacts
-origin/main: same commit
-git pull --ff-only: Already up to date
-working tree: clean before this handoff edit
+current branch: agent/add-segmented-evaluation
+remote branch before the run2 commit: 024151a Add segmented SR max-complexity evaluation
+main and origin/main: 71c905e Add local disk segmented SR smoke test artifacts
+draft PR: #1, OPEN and MERGEABLE, targeting main
+completed run2 work included in the next/current local commit:
+  surrogate_model/datasets/run2/
+  surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_pysr_runs/20260803_run2_iter100_pop12_ps100_size28_allrows_serial/
+  surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_candidate_evaluation_runs/20260803_run2_maxc16/
+remaining untracked local content intentionally excluded from commits:
+  surrogate_model/symbolic_regression/ (temporary smoke output only)
 ```
 
 If a future conversation starts from this handoff, first run:
@@ -676,15 +776,33 @@ git status --short --branch
 git pull --ff-only
 ```
 
+Then check the current state of PR #1 and whether the local branch has been
+pushed before choosing a branch or making new commits. At the time run2 was
+completed, PR #1 contained only the earlier run1 evaluation; it will include
+run2 only after the new commit is pushed. Do not discard the untracked smoke
+directory.
+
 ## Current Maturity Summary
 
 Current segmented SR is mature enough for reporting-level inspection. Its
 recommended evaluation is the `max_complexity=16` selected-candidate evaluation
-listed above.
+listed above for run2. The full run2 training and evaluation completed
+successfully on this machine.
 
-Global SR currently has dataset generation and inspection only. Formal global
-PySR training/evaluation still needs to be implemented before it can be fairly
-compared.
+Global SR has a generated run2 dataset but no formal training/evaluation.
+Formal global PySR training/evaluation still needs to be implemented before it
+can be fairly compared.
 
-MLP currently has a small baseline artifact only. It is not yet at the same
-formal comparison maturity as segmented SR.
+MLP has a generated run2 teacher dataset, but no formal run2 training. The old
+small baseline artifact is not at the same comparison maturity as segmented SR.
+
+Immediate project next steps are:
+
+```text
+1. Review the run2 datasets, segmented training artifacts, and evaluation.
+2. Decide how to commit/publish run2 work alongside or after draft PR #1.
+3. Implement and run formal global SR training/evaluation on datasets/run2.
+4. Produce a formal MLP result on datasets/run2 using a comparison protocol
+   compatible with the SR branches.
+5. Only then perform the three-model horizontal comparison.
+```

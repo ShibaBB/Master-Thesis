@@ -21,11 +21,13 @@ All model comparisons should use one dataset run at a time.
 
 Current comparison dataset:
 
-- [datasets/run1](</C:/Users/liuzi/OneDrive/Master Thesis/Fibers/surrogate_model/datasets/run1>)
+- `datasets/run2`
   - `MLP/Wool_surrogate_dataset.mat`: shared teacher curve dataset for MLP.
   - `segmented_SR/Wool_symbolic_segmented.mat`: scalar dataset for segmented SR.
   - `global_SR/Wool_symbolic_global.mat`: scalar dataset for global SR.
   - `dataset_manifest.json`: source and comparison metadata.
+
+`datasets/run1` remains as the earlier baseline dataset run.
 
 Use only datasets from the same `run*` folder when comparing MLP, segmented SR, and global SR.
 
