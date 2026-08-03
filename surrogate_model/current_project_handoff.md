@@ -341,6 +341,19 @@ train_segmented_symbolic_models.py
 evaluate_segmented_symbolic_candidates.py
 ```
 
+All active segmented-SR entry points now resolve their default dataset run
+from:
+
+```text
+surrogate_model/segmented_symbolic_regression/dataset_run_config.json
+```
+
+The current default is `run2`. MATLAB generation/inspection and Python
+training/evaluation therefore use the same run by default. Python also accepts
+`--dataset-run`; standard `datasets/run*/...` paths are checked against it,
+and evaluation refuses to combine a dataset with training metadata from a
+different run.
+
 Current output roots:
 
 ```text

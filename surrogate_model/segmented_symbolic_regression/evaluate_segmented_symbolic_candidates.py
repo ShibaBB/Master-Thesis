@@ -25,9 +25,14 @@ import pandas as pd
 import sympy as sp
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
+from segmented_run_paths import (
+    default_dataset_run,
+    resolve_dataset_file,
+    training_dataset_run,
+)
+
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_DATASET = SCRIPT_DIR.parent / "datasets" / "run1" / "segmented_SR" / "Wool_symbolic_segmented.mat"
 DEFAULT_TRAINING_ROOT = SCRIPT_DIR / "artifacts" / "wool_segmented_symbolic_pysr_runs"
 DEFAULT_OUTPUT_ROOT = SCRIPT_DIR / "artifacts" / "wool_segmented_symbolic_candidate_evaluation_runs"
 
@@ -36,7 +41,17 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Evaluate PySR candidate equations and generate diagnostic plots."
     )
-    parser.add_argument("--dataset-file", type=Path, default=DEFAULT_DATASET)
+    parser.add_argument(
+        "--dataset-run",
+        default=default_dataset_run(),
+        help="Dataset run under surrogate_model/datasets (default comes from dataset_run_config.json).",
+    )
+    parser.add_argument(
+        "--dataset-file",
+        type=Path,
+        default=None,
+        help="Optional explicit dataset path. Standard datasets/run*/ paths must match --dataset-run.",
+    )
     parser.add_argument(
         "--training-root",
         type=Path,
@@ -100,8 +115,14 @@ def unique_path(base_path: Path) -> Path:
     raise RuntimeError(f"Could not create a unique output path for base path: {base_path}")
 
 
-def resolve_training_dir(args: argparse.Namespace) -> Path:
+def resolve_training_dir(args: argparse.Namespace, dataset_run: str) -> Path:
     if args.training_dir is not None:
+        candidate_run = training_dataset_run(args.training_dir)
+        if dataset_run != "custom" and candidate_run != dataset_run:
+            raise ValueError(
+                f"Training/evaluation run mismatch: dataset uses {dataset_run!r}, but "
+                f"training metadata reports {candidate_run!r}: {args.training_dir}"
+            )
         return args.training_dir
 
     if not args.training_root.exists():
@@ -113,12 +134,14 @@ def resolve_training_dir(args: argparse.Namespace) -> Path:
     candidates = [
         path
         for path in args.training_root.iterdir()
-        if path.is_dir() and (path / "equations").exists()
+        if path.is_dir()
+        and (path / "equations").exists()
+        and (dataset_run == "custom" or training_dataset_run(path) == dataset_run)
     ]
     if not candidates:
         raise FileNotFoundError(
-            "No training runs with an equations directory were found under: "
-            f"{args.training_root}"
+            f"No training runs for dataset run {dataset_run!r} with an equations "
+            f"directory were found under: {args.training_root}"
         )
 
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -131,7 +154,8 @@ def resolve_output_dir(args: argparse.Namespace) -> Path:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     training_name = sanitize_name(args.training_dir.name)
     selection_tag = sanitize_name(args.selection_rule)
-    return unique_path(args.output_root / f"{timestamp}_{training_name}_{selection_tag}")
+    run_tag = sanitize_name(args.dataset_run)
+    return unique_path(args.output_root / f"{timestamp}_{run_tag}_{training_name}_{selection_tag}")
 
 
 def decode_matlab_string(file: h5py.File, value: Any) -> str:
@@ -446,7 +470,11 @@ def evaluate_selected_combination(
 
 def main() -> None:
     args = parse_args()
-    args.training_dir = resolve_training_dir(args)
+    args.dataset_file, resolved_dataset_run = resolve_dataset_file(
+        args.dataset_run, args.dataset_file
+    )
+    args.dataset_run = resolved_dataset_run
+    args.training_dir = resolve_training_dir(args, resolved_dataset_run)
     args.output_dir = resolve_output_dir(args)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     figures_dir = args.output_dir / "figures"
@@ -476,6 +504,7 @@ def main() -> None:
     selected_metrics = regression_metrics(data["y"], y_pred_all)
     selected_summary = {
         "dataset_file": str(args.dataset_file),
+        "dataset_run": resolved_dataset_run,
         "training_dir": str(args.training_dir),
         "selection_rule": args.selection_rule,
         "selected_candidates": selected,

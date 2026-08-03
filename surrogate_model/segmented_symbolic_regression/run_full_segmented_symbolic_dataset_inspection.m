@@ -8,7 +8,9 @@ clc;
 script_dir = fileparts(mfilename('fullpath'));
 
 symbolic_inspection_config = struct();
-symbolic_inspection_config.dataset_file = fullfile(fileparts(script_dir), 'datasets', 'run1', 'segmented_SR', 'Wool_symbolic_segmented.mat');
+run_config = segmented_dataset_run_config();
+symbolic_inspection_config.dataset_run = run_config.dataset_run;
+symbolic_inspection_config.dataset_file = run_config.segmented_dataset_file;
 symbolic_inspection_config.inspection_name = 'wool_segmented_symbolic_dataset_inspection';
 
 run(fullfile(script_dir, 'inspect_segmented_symbolic_dataset.m'));

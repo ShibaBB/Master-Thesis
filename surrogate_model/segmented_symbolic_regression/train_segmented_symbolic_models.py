@@ -22,9 +22,10 @@ import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 
+from segmented_run_paths import default_dataset_run, resolve_dataset_file
+
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_DATASET = SCRIPT_DIR.parent / "datasets" / "run1" / "segmented_SR" / "Wool_symbolic_segmented.mat"
 DEFAULT_OUTPUT_ROOT = SCRIPT_DIR / "artifacts" / "wool_segmented_symbolic_pysr_runs"
 DEFAULT_JULIA_EXE = (
     Path.home()
@@ -49,7 +50,17 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Train one PySR symbolic-regression model per frequency segment."
     )
-    parser.add_argument("--dataset-file", type=Path, default=DEFAULT_DATASET)
+    parser.add_argument(
+        "--dataset-run",
+        default=default_dataset_run(),
+        help="Dataset run under surrogate_model/datasets (default comes from dataset_run_config.json).",
+    )
+    parser.add_argument(
+        "--dataset-file",
+        type=Path,
+        default=None,
+        help="Optional explicit dataset path. Standard datasets/run*/ paths must match --dataset-run.",
+    )
     parser.add_argument(
         "--output-root",
         type=Path,
@@ -113,7 +124,7 @@ def resolve_output_dir(args: argparse.Namespace) -> Path:
         else f"cap{args.max_samples_per_segment}"
     )
     config_tag = (
-        f"iter{args.niterations}_pop{args.populations}_"
+        f"{sanitize_name(args.dataset_run)}_iter{args.niterations}_pop{args.populations}_"
         f"ps{args.population_size}_size{args.maxsize}_{sample_tag}"
     )
     run_suffix = f"_{sanitize_name(args.run_name)}" if args.run_name.strip() else ""
@@ -330,6 +341,10 @@ def train_one_segment(
 
 def main() -> None:
     args = parse_args()
+    args.dataset_file, resolved_dataset_run = resolve_dataset_file(
+        args.dataset_run, args.dataset_file
+    )
+    args.dataset_run = resolved_dataset_run
 
     if args.julia_exe.exists():
         os.environ.setdefault("PYTHON_JULIAPKG_EXE", str(args.julia_exe))
@@ -341,6 +356,7 @@ def main() -> None:
 
     metadata = {
         "dataset_file": str(args.dataset_file),
+        "dataset_run": resolved_dataset_run,
         "fiberfolder": data["fiberfolder"],
         "num_curve_samples": data["num_curve_samples"],
         "num_symbolic_samples": data["num_symbolic_samples"],

@@ -8,7 +8,9 @@ clc;
 script_dir = fileparts(mfilename('fullpath'));
 
 %% Configuration
-dataset_file = fullfile(fileparts(script_dir), 'datasets', 'run1', 'segmented_SR', 'Wool_symbolic_segmented.mat');
+run_config = segmented_dataset_run_config();
+dataset_run = run_config.dataset_run;
+dataset_file = run_config.segmented_dataset_file;
 inspection_name = 'wool_segmented_symbolic_dataset_inspection';
 
 artifacts_dir = fullfile(script_dir, 'artifacts', inspection_name);
@@ -20,6 +22,11 @@ max_histogram_features = 8;
 scatter_max_points = 5000;
 
 if exist('symbolic_inspection_config', 'var')
+    if isfield(symbolic_inspection_config, 'dataset_run')
+        run_config = segmented_dataset_run_config(symbolic_inspection_config.dataset_run);
+        dataset_run = run_config.dataset_run;
+        dataset_file = run_config.segmented_dataset_file;
+    end
     if isfield(symbolic_inspection_config, 'dataset_file'), dataset_file = symbolic_inspection_config.dataset_file; end
     if isfield(symbolic_inspection_config, 'inspection_name'), inspection_name = symbolic_inspection_config.inspection_name; end
     if isfield(symbolic_inspection_config, 'artifacts_dir')
@@ -43,6 +50,8 @@ if ~figures_dir_overridden
 end
 
 %% Validate environment
+assert_segmented_dataset_run_paths(dataset_run, dataset_file);
+
 if ~exist(dataset_file, 'file')
     error('Symbolic dataset file not found: %s', dataset_file);
 end
