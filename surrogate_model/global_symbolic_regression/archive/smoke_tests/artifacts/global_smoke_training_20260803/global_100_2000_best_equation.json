@@ -1,0 +1,26 @@
+{
+  "global_name": "global_100_2000",
+  "lower_hz": 100.0,
+  "upper_hz": 2000.0,
+  "equation": "(0.931278 / sqrt(log(sigma))) - -0.41848382",
+  "complexity": 7,
+  "loss": 0.079138644,
+  "score": 0.21220787892829887,
+  "n_rows_used": 500,
+  "n_train": 400,
+  "n_test": 100,
+  "train_metrics": {
+    "rmse": 0.28131590748190266,
+    "mae": 0.20929928884206725,
+    "max_abs_error": 0.6967204794871741,
+    "r2": -0.14882423478463802
+  },
+  "test_metrics": {
+    "rmse": 0.2910611524931467,
+    "mae": 0.21495066291271786,
+    "max_abs_error": 0.6819043389231659,
+    "r2": -0.16538024533761275
+  },
+  "equations_csv": "C:\\MasterThesis_Project\\surrogate_model\\global_symbolic_regression\\archive\\smoke_tests\\artifacts\\global_smoke_training_20260803\\equations\\global_100_2000_equations.csv",
+  "model_file": "C:\\MasterThesis_Project\\surrogate_model\\global_symbolic_regression\\archive\\smoke_tests\\artifacts\\global_smoke_training_20260803\\models\\global_100_2000_pysr_model.pkl"
+}

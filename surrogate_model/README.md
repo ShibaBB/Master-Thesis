@@ -10,8 +10,8 @@
   - Current segmented symbolic-regression workflow using PySR.
   - This is the active segmented SR model branch.
 - [global_symbolic_regression](</C:/Users/liuzi/OneDrive/Master Thesis/Fibers/surrogate_model/global_symbolic_regression>)
-  - Placeholder for the planned global SR model branch.
-  - It is intended for one full-range symbolic formula over `100-2000 Hz`.
+  - Current global symbolic-regression workflow using one full-range PySR
+    formula over `100-2000 Hz`.
 - [docs](</C:/Users/liuzi/OneDrive/Master Thesis/Fibers/surrogate_model/docs>)
   - General background notes, original strategy documents, and reference material.
 
@@ -47,7 +47,7 @@ Use only datasets from the same `run*` folder when comparing MLP, segmented SR, 
   - [strategy_segmented_symbolic.md](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/segmented_symbolic_regression/strategy_segmented_symbolic.md:1)
 - Symbolic handoff note:
   - [segmented_symbolic_regression_handoff.md](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/segmented_symbolic_regression/segmented_symbolic_regression_handoff.md:1)
-- Planned global symbolic-regression branch:
+- Global symbolic-regression training and evaluation:
   - [global_symbolic_regression](</C:/Users/liuzi/OneDrive/Master Thesis/Fibers/surrogate_model/global_symbolic_regression>)
 
 ## Naming Rule
@@ -55,6 +55,6 @@ Use only datasets from the same `run*` folder when comparing MLP, segmented SR, 
 - MLP-only scripts use the `mlp_` prefix.
 - Shared teacher-data pipeline scripts live only under `data_generation/`.
 - Segmented symbolic-regression files live under `segmented_symbolic_regression/`.
-- Global symbolic-regression files should live under `global_symbolic_regression/` once that model branch is implemented.
+- Global symbolic-regression files live under `global_symbolic_regression/`.
 
 This separation is intended to reduce accidental cross-calling between the MLP and symbolic-regression branches.

@@ -119,8 +119,8 @@ segmented_symbolic_regression/
   formulas on predefined frequency segments.
 
 global_symbolic_regression/
-  Global symbolic regression branch. Dataset generation and inspection exist;
-  formal global PySR training/evaluation is not implemented yet.
+  Global symbolic regression branch. Fits and evaluates one PySR formula over
+  the full 100-2000 Hz range.
 
 docs/
   Background notes, original task descriptions, and strategy/reference files.
@@ -555,9 +555,8 @@ Current status:
 
 ```text
 The run2 global scalar dataset has been generated successfully.
-Dataset generation and inspection code exist.
-Formal global PySR training/evaluation is not implemented yet.
-No run2 global training was requested or performed.
+Dataset generation, inspection, training, and evaluation code exist.
+Formal run2 global training and max-complexity evaluation completed successfully.
 ```
 
 Important entry points:
@@ -565,6 +564,8 @@ Important entry points:
 ```text
 run_global_symbolic_dataset_generation.m
 run_global_symbolic_dataset_inspection.m
+train_global_symbolic_model.py
+evaluate_global_symbolic_candidates.py
 ```
 
 Current global dataset:
@@ -585,6 +586,50 @@ explicitly overrides the output directory so global artifacts stay under:
 ```text
 surrogate_model/global_symbolic_regression/artifacts
 ```
+
+Latest completed full global SR training run:
+
+```text
+surrogate_model/global_symbolic_regression/artifacts/wool_global_symbolic_pysr_runs/20260803_run2_full
+```
+
+Configuration:
+
+```text
+niterations = 100
+populations = 12
+population_size = 100
+maxsize = 28
+rows used = all 64000 scalar samples
+parallelism = serial
+dataset run = run2
+```
+
+The PySR-selected training equation has complexity 13, test RMSE `0.061594`,
+test MAE `0.048990`, and test R2 `0.941964`.
+
+Latest complete global evaluation run:
+
+```text
+surrogate_model/global_symbolic_regression/artifacts/wool_global_symbolic_candidate_evaluation_runs/20260803_run2_maxc21
+```
+
+The `max_complexity=21` rule selected candidate 13, complexity 20:
+
+```text
+((log(log(log(f) - 2.792401)) + (f * alpha_infinity / sigma))
+ * log(log(f) - 3.343083)) + 0.17144258
+```
+
+Full-dataset clipped metrics are RMSE `0.0564852056`, MAE `0.0443311168`,
+max absolute error `0.2335056388`, and R2 `0.9512410095`. The raw prediction
+range was `0.039444` to `1.208810`; 883 of 64000 predictions (`1.3796875%`)
+were clipped to `[0,1]`. All 17 candidate formulas evaluated successfully.
+
+The earlier `max_complexity=16` evaluation selected candidate 9, complexity
+13, with RMSE `0.0614264381`, MAE `0.0487192655`, max absolute error
+`0.2259478249`, and R2 `0.9423371711`. It remains the simpler comparison point;
+the maxc21 result is the current recommended accuracy/complexity trade-off.
 
 ## Current Artifact Layout
 
@@ -613,7 +658,16 @@ surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_
 Global SR current artifact root:
 
 ```text
-surrogate_model/global_symbolic_regression/artifacts/wool_symbolic_global_dataset_inspection
+surrogate_model/global_symbolic_regression/artifacts/
+  wool_symbolic_global_dataset_inspection/
+  wool_global_symbolic_pysr_runs/
+  wool_global_symbolic_candidate_evaluation_runs/
+```
+
+Global SR smoke-test artifacts are kept under:
+
+```text
+surrogate_model/global_symbolic_regression/archive/smoke_tests/artifacts/
 ```
 
 MLP current known artifact:
@@ -658,10 +712,23 @@ Current segmented SR training/evaluation sequence:
    --max-complexity 16
 ```
 
-MLP and global SR do not yet have formal comparable training/evaluation runs.
-They should read from `run2` when those pipelines are completed. The run2 MLP
-and global datasets already exist; do not regenerate them unless intentionally
-creating another dataset run.
+Current global SR training/evaluation sequence:
+
+```text
+1. train_global_symbolic_model.py
+   --niterations 100
+   --populations 12
+   --population-size 100
+   --maxsize 28
+
+2. evaluate_global_symbolic_candidates.py
+   --selection-rule max_complexity
+   --max-complexity 21
+```
+
+MLP still does not have a formal run2 comparison result. The run2 datasets
+already exist; do not regenerate them unless intentionally creating another
+dataset run.
 
 ## Git And GitHub Sync Policy
 
@@ -817,6 +884,11 @@ remaining untracked local content intentionally excluded from commits:
   surrogate_model/symbolic_regression/ (temporary smoke output only)
   incomplete long-path attempt: 20260803_115855_run2_iter100_pop12_ps100_size28_allrows_interface_validation_full_serial/
   raw pysr_runs/ output and models/*.pkl from 20260803_run2_iface_full/
+global-SR work included in the current local commit:
+  global training/evaluation entry points and run2 configuration
+  global smoke-test archive
+  formal training: 20260803_run2_full/
+  formal evaluations: 20260803_run2_maxc16/ and 20260803_run2_maxc21/
 ```
 
 If a future conversation starts from this handoff, first run:
@@ -840,9 +912,9 @@ recommended evaluation is the `max_complexity=16` selected-candidate evaluation
 listed above for run2. The full run2 training and evaluation completed
 successfully on this machine.
 
-Global SR has a generated run2 dataset but no formal training/evaluation.
-Formal global PySR training/evaluation still needs to be implemented before it
-can be fairly compared.
+Global SR is now also mature enough for reporting-level inspection. Its
+recommended run2 result is the `max_complexity=21` evaluation listed above.
+The full run2 training and evaluation completed successfully on this machine.
 
 MLP has a generated run2 teacher dataset, but no formal run2 training. The old
 small baseline artifact is not at the same comparison maturity as segmented SR.
@@ -850,10 +922,9 @@ small baseline artifact is not at the same comparison maturity as segmented SR.
 Immediate project next steps are:
 
 ```text
-1. Review the run2 datasets, segmented training artifacts, and evaluation.
-2. Decide how to commit/publish run2 work alongside or after draft PR #1.
-3. Implement and run formal global SR training/evaluation on datasets/run2.
-4. Produce a formal MLP result on datasets/run2 using a comparison protocol
+1. Review the run2 segmented and global SR artifacts and evaluations.
+2. Decide how to commit/publish the global SR implementation and results.
+3. Produce a formal MLP result on datasets/run2 using a comparison protocol
    compatible with the SR branches.
-5. Only then perform the three-model horizontal comparison.
+4. Then perform the three-model horizontal comparison.
 ```

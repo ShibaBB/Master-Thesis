@@ -1,0 +1,2 @@
+global_name,lower_hz,upper_hz,equation,complexity,loss,train_rmse,test_rmse,train_mae,test_mae,test_r2,n_rows_used
+global_100_2000,100.0,2000.0,log((sqrt(f) * 0.040338162) + 0.5729618) + ((f * alpha_infinity) / sigma),13,0.0038484663,0.062036007530949656,0.06159362914071185,0.04935711302233648,0.048989706210884366,0.9419639800201258,64000

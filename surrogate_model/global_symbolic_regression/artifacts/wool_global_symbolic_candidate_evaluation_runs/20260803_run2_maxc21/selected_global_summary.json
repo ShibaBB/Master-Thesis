@@ -1,0 +1,58 @@
+{
+  "dataset_file": "C:\\MasterThesis_Project\\surrogate_model\\datasets\\run2\\global_SR\\Wool_symbolic_global.mat",
+  "dataset_run": "run2",
+  "training_dir": "C:\\MasterThesis_Project\\surrogate_model\\global_symbolic_regression\\artifacts\\wool_global_symbolic_pysr_runs\\20260803_run2_full",
+  "selection_rule": "max_complexity",
+  "output_postprocessing": {
+    "method": "clip",
+    "lower_bound": 0.0,
+    "upper_bound": 1.0,
+    "num_values_clipped": 883
+  },
+  "selected_candidate": 13,
+  "global_name": "global_100_2000",
+  "global_bounds_hz": [
+    100.0,
+    2000.0
+  ],
+  "feature_names": [
+    "phi",
+    "h",
+    "sigma",
+    "alpha_infinity",
+    "lambda",
+    "lambda_prime",
+    "k0_prime",
+    "f"
+  ],
+  "pysr_variable_names": [
+    "phi",
+    "h",
+    "sigma",
+    "alpha_infinity",
+    "lambda_var",
+    "lambda_prime",
+    "k0_prime",
+    "f"
+  ],
+  "overall_metrics": {
+    "rmse": 0.05648520557010442,
+    "mae": 0.044331116819730204,
+    "max_abs_error": 0.23350563884885445,
+    "r2": 0.9512410094578961
+  },
+  "raw_prediction_diagnostics": {
+    "prediction_min": 0.03944360782025802,
+    "prediction_max": 1.2088099067260685,
+    "count_below_zero": 0,
+    "count_above_one": 883,
+    "fraction_outside_0_1": 0.013796875
+  },
+  "prediction_diagnostics": {
+    "prediction_min": 0.03944360782025802,
+    "prediction_max": 1.0,
+    "count_below_zero": 0,
+    "count_above_one": 0,
+    "fraction_outside_0_1": 0.0
+  }
+}

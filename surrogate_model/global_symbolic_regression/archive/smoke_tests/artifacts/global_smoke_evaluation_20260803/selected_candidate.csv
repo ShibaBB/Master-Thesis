@@ -1,0 +1,2 @@
+global_name,candidate_index,complexity,pysr_loss,pysr_score,equation,expression_for_eval,eval_status,raw_prediction_min,raw_prediction_max,num_clipped,rmse,mae,max_abs_error,r2
+global_100_2000,5,8,0.07537913,0.0486708553684809,sqrt(sqrt(alpha_infinity / log(f / h))),(alpha_infinity/log(f/h))**(1/4),ok,0.547855868545046,0.7115953650758763,0,0.2672893575647823,0.21890510351340614,0.7015279575037228,-0.0918138844367613
