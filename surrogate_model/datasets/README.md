@@ -22,6 +22,24 @@ This keeps all models tied to the same teacher data.
   - Uses one global `100-2000 Hz` segment.
 - `dataset_manifest.json`
   - Records the source/derived dataset relationship.
+- `shared_curve_split.json`
+  - Defines the common 1-based source curve indices used by every model.
+  - Current sizes: 700 train, 150 validation, and 150 test curves.
+  - SR rows are selected through `source_curve_index`; scalar rows are never
+    independently randomized across splits.
+  - The split hash excludes frequency range and frequency count. A compatible
+    teacher dataset may therefore change from the current frequency grid to a
+    later grid such as 100-4950 Hz without changing curve membership.
+
+Generate the split after creating a new teacher dataset run:
+
+```powershell
+python surrogate_model/generate_shared_curve_split.py --dataset-run run2
+```
+
+If source curve count or source curve identities change, create a new dataset
+run and regenerate its split. Training and evaluation artifacts record both
+the resolved split path and SHA-256 split hash.
 
 `run1` is retained as the earlier baseline run. Do not mix models trained on
 run1 with models trained on run2 in a horizontal comparison.

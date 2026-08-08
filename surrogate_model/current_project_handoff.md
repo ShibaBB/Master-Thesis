@@ -5,6 +5,9 @@ run logic, shared dataset structure, artifact layout, and Git/GitHub sync
 policy. It is intended to give a new conversation enough context to continue
 work without rediscovering the repository.
 
+Last updated: 2026-08-08, after validating MLP, segmented SR, and global SR
+end to end following the workspace-root rename.
+
 ## Project Goal
 
 The project compares surrogate models for a MATLAB JCAL acoustic absorption
@@ -40,13 +43,16 @@ The active local working copy has been moved off OneDrive. The current intended
 workspace is:
 
 ```text
-C:/MasterThesis_Project
+C:/MasterThesis_Project_alpha
 ```
+
+The previous root `C:/MasterThesis_Project` is obsolete. Active code and the
+latest model artifacts were checked for references to that old absolute path.
 
 GitHub remote:
 
 ```text
-https://github.com/ShibaBB/Master-Thesis
+https://github.com/ShibaBB/MasterThesis_Project_alpha
 ```
 
 Current working branch as last verified on 2026-08-03:
@@ -59,7 +65,7 @@ The repository default branch remains `main`. The current working branch adds
 the latest formal segmented SR evaluation and is published in draft PR #1:
 
 ```text
-https://github.com/ShibaBB/Master-Thesis/pull/1
+https://github.com/ShibaBB/MasterThesis_Project_alpha/pull/1
 ```
 
 Current synchronization logic:
@@ -154,6 +160,29 @@ Use only datasets within the same run_id for horizontal model comparison.
 Do not compare a model trained on one dataset run with a model trained on
 another dataset run.
 ```
+
+### Shared Source-Curve Split
+
+The current cross-model split is:
+
+```text
+surrogate_model/datasets/run2/shared_curve_split.json
+```
+
+It assigns the 1000 source curves to 700 train, 150 validation, and 150 test
+curves. Its SHA-256 split hash is:
+
+```text
+512522db31338b940ba555d36ea567646fb112dbcd802c460e134dd6ff58d437
+```
+
+The split is defined only over 1-based source curve indices and is deliberately
+independent of frequency range and frequency count. MLP consumes these curve
+indices directly. Segmented and global SR select scalar rows using
+`source_curve_index`. Candidate selection is performed on validation curves;
+final reported evaluation is performed on test curves. Training and evaluation
+artifacts record both the resolved split path and split hash, and SR evaluation
+rejects a training run with a missing or different hash.
 
 ### Teacher / MLP Dataset
 
@@ -304,9 +333,8 @@ Current status:
 
 ```text
 The run2 MLP teacher dataset has been generated successfully.
-No run2 MLP training was requested or performed.
-Only the older small baseline artifact exists, so there is still no formal
-run2 MLP comparison result.
+A formal run2 MLP baseline has completed using the shared source-curve split.
+The older 50-curve small baseline remains a historical pipeline smoke test.
 ```
 
 Known artifact:
@@ -314,6 +342,32 @@ Known artifact:
 ```text
 surrogate_model/MLP/artifacts/wool_baseline_mlp_small
 ```
+
+Latest formal shared-split artifact after the workspace rename:
+
+```text
+surrogate_model/MLP/artifacts/wool_baseline_mlp_runs/20260808_113400_run2_baseline
+```
+
+The older fixed-name `wool_baseline_mlp_run2` directory is preserved for
+traceability. New MLP executions use:
+
+```text
+surrogate_model/MLP/artifacts/wool_baseline_mlp_runs/
+  <timestamp>_<experiment_name>/
+```
+
+Automatic names are collision-safe, and an explicitly supplied nonempty
+artifact directory is rejected rather than overwritten.
+
+Formal run2 test metrics are RMSE `0.0023771671`, MAE `0.0016958551`, and R2
+`0.9984784126`. These replace the earlier run2 MLP result that used an
+internally generated split.
+
+The 2026-08-08 run completed successfully from
+`C:/MasterThesis_Project_alpha`, recorded the new resolved dataset and split
+paths, and generated all expected model, prediction, metric, and figure
+artifacts. No MLP path-code change was required after the rename.
 
 The MLP branch should use:
 
@@ -388,11 +442,16 @@ surrogate_model/datasets/run2/segmented_SR/Wool_symbolic_segmented.mat
 
 ### Latest Full Segmented SR Training
 
-Latest completed full segmented SR training run:
+Latest completed full shared-split segmented SR training run:
 
 ```text
-surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_pysr_runs/20260803_run2_iface_full
+surrogate_model/segmented_symbolic_regression/artifacts/archived_pre_segmented_rename_artifacts/wool_segmented_symbolic_pysr_runs/20260808_113903_run2_rootrename
 ```
+
+This completed shared-split run is retained under the archive for traceability.
+Its metadata paths have been synchronized with the archived location. Future
+runs write directly under the active standard `wool_segmented_symbolic_*_runs`
+roots with short run names.
 
 Configuration:
 
@@ -410,25 +469,20 @@ Training summary:
 
 ```text
 segment              complexity   test_rmse   test_mae   test_r2
-low_100_700          16           0.020634    0.015765   0.982880
-midlow_700_1000      20           0.035650    0.027242   0.717309
-midhigh_1000_1300    20           0.034049    0.024614   0.735508
-highlow_1300_1650    14           0.024609    0.017281   0.906919
-high_1650_2000       13           0.019416    0.013959   0.944005
+low_100_700          21           0.019449    0.015189   0.984828
+midlow_700_1000      18           0.030287    0.023426   0.757797
+midhigh_1000_1300    13           0.036732    0.028008   0.660112
+highlow_1300_1650    14           0.027023    0.019230   0.875655
+high_1650_2000        9           0.021219    0.015567   0.931240
 ```
 
 ### Latest Segmented SR Evaluation
 
-Latest complete evaluation run:
+Latest complete shared-split evaluation run:
 
 ```text
-surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_candidate_evaluation_runs/20260803_run2_iface_maxc16
+surrogate_model/segmented_symbolic_regression/artifacts/archived_pre_segmented_rename_artifacts/wool_segmented_symbolic_candidate_evaluation_runs/20260808_120119_run2_rootrename_c16
 ```
-
-This evaluation was produced successfully on the local hard-drive clone from
-the full run2 training run listed above. Its analysis-ready artifacts are
-included in the latest local commit; the branch may still need to be pushed
-before another computer or draft PR #1 can see them.
 
 Selection rule:
 
@@ -441,44 +495,37 @@ equations CSV. Candidate index and expression complexity are different fields:
 
 ```text
 segment              candidate_index   complexity
-low_100_700          13                16
+low_100_700           9                15
 midlow_700_1000      12                16
-midhigh_1000_1300    12                15
+midhigh_1000_1300     9                15
 highlow_1300_1650    13                16
-high_1650_2000       11                15
+high_1650_2000        9                11
 ```
 
 Overall selected-formula metrics:
 
 ```text
-RMSE          0.0274685145
-MAE           0.0194199672
-max_abs_error 0.2047642883
-R2            0.9884693013
+RMSE          0.0271962706
+MAE           0.0200443252
+max_abs_error 0.1576901805
+R2            0.9884268272
 ```
 
-This `max_complexity=16` evaluation is the current recommended segmented SR
-result for run2 interpretation and reporting. The earlier run1 evaluation had
-RMSE `0.0285096442`, MAE `0.0198104144`, and R2 `0.9875635954`; it remains a
-historical within-run result and must not be substituted into a run2 horizontal
-comparison.
-
-This run was also the first full end-to-end validation of the shared segmented
-dataset-run interface. Both training and evaluation resolved `run2` from
-`dataset_run_config.json`, recorded `dataset_run: run2`, and passed the
-training/evaluation metadata consistency check. All 96 candidate formulas
-evaluated successfully.
+This `max_complexity=16` evaluation is the current shared-split segmented SR
+result for run2 comparison. Candidate selection used validation curves and the
+reported metrics use only test curves. Training row counts were 44,800 train,
+9,600 validation, and 9,600 test rows across the five segments.
 
 Evaluation now applies output clipping to every candidate and selected formula:
 `alpha_final = clip(alpha_raw, 0, 1)`. Candidate selection, reported metrics,
 figures, and boundary diagnostics all use the clipped predictions. For this
-run, the raw range was `-0.034435` to `1.072190`; 316 of 64000 predictions
-(`0.49375%`) were clipped, and the final range is exactly `[0,1]`. Raw and
-clipped diagnostics are both retained in `selected_combination_summary.json`.
-The largest mean boundary excess change occurs near `1000 Hz` (`0.037185`),
-followed by `700 Hz` (`0.034214`). These boundary effects are model-quality
-limitations caused by independent segment formulas, not dataset-run interface
-failures. Detailed values are also stored in `boundary_transition_metrics.csv`.
+run, the raw range was `-0.012258` to `1.026859`; 29 of 9,600 test predictions
+were clipped, and the final range is exactly `[0,1]`. Raw and clipped
+diagnostics are retained in `selected_combination_summary.json`.
+
+The earlier 2026-08-03 `run2_iface_full` / `run2_iface_maxc16` artifacts predate
+the shared source-curve split and are historical only. They must not replace
+the 2026-08-08 result in the final three-model comparison.
 
 The first validation attempt used an automatically generated directory whose
 deepest PySR path reached 265 characters and failed while Julia was opening
@@ -499,7 +546,7 @@ deterministic flag was added, so an exact bit-for-bit retrain is not guaranteed.
 ### Local Environment And Smoke-Test Status
 
 The full segmented training/evaluation pipeline has also been smoke-tested
-successfully on `C:/MasterThesis_Project`. The verified local environment is:
+successfully on `C:/MasterThesis_Project_alpha`. The verified local environment is:
 
 ```text
 Python 3.11.9
@@ -587,10 +634,10 @@ explicitly overrides the output directory so global artifacts stay under:
 surrogate_model/global_symbolic_regression/artifacts
 ```
 
-Latest completed full global SR training run:
+Latest completed full shared-split global SR training run:
 
 ```text
-surrogate_model/global_symbolic_regression/artifacts/wool_global_symbolic_pysr_runs/20260803_run2_full
+surrogate_model/global_symbolic_regression/artifacts/wool_global_symbolic_pysr_runs/20260808_121026_run2
 ```
 
 Configuration:
@@ -605,31 +652,33 @@ parallelism = serial
 dataset run = run2
 ```
 
-The PySR-selected training equation has complexity 13, test RMSE `0.061594`,
-test MAE `0.048990`, and test R2 `0.941964`.
+The PySR `model_selection=best` training equation has complexity 14, test RMSE
+`0.0517995`, test MAE `0.0379631`, and test R2 `0.9580159`. This training
+summary is not the final reported candidate-selection result below.
 
 Latest complete global evaluation run:
 
 ```text
-surrogate_model/global_symbolic_regression/artifacts/wool_global_symbolic_candidate_evaluation_runs/20260803_run2_maxc21
+surrogate_model/global_symbolic_regression/artifacts/wool_global_symbolic_candidate_evaluation_runs/20260808_123902_run2_c21
 ```
 
-The `max_complexity=21` rule selected candidate 13, complexity 20:
+The `max_complexity=21` rule selected candidate 15, complexity 21:
 
 ```text
-((log(log(log(f) - 2.792401)) + (f * alpha_infinity / sigma))
- * log(log(f) - 3.343083)) + 0.17144258
+(log((alpha_infinity * log(sigma / lambda_prime)) + f)
+ * (0.5043573 - (sigma * 2.6579944e-6)))
++ (-2.763736 - (sigma * -1.7161241e-5))
 ```
 
-Full-dataset clipped metrics are RMSE `0.0564852056`, MAE `0.0443311168`,
-max absolute error `0.2335056388`, and R2 `0.9512410095`. The raw prediction
-range was `0.039444` to `1.208810`; 883 of 64000 predictions (`1.3796875%`)
-were clipped to `[0,1]`. All 17 candidate formulas evaluated successfully.
+Test-only clipped metrics are RMSE `0.0442206187`, MAE `0.0342617541`, max
+absolute error `0.2006859400`, and R2 `0.9694026821`. The raw test prediction
+range was `-0.273444` to `1.028811`; 261 of 9,600 test predictions were clipped
+to `[0,1]`. Candidate selection used validation curves; final reporting used
+test curves.
 
-The earlier `max_complexity=16` evaluation selected candidate 9, complexity
-13, with RMSE `0.0614264381`, MAE `0.0487192655`, max absolute error
-`0.2259478249`, and R2 `0.9423371711`. It remains the simpler comparison point;
-the maxc21 result is the current recommended accuracy/complexity trade-off.
+The earlier 2026-08-03 global training and maxc16/maxc21 evaluations predate the
+shared source-curve split and remain historical. The 2026-08-08 maxc21 result
+is the current global SR result eligible for the final horizontal comparison.
 
 ## Current Artifact Layout
 
@@ -670,11 +719,15 @@ Global SR smoke-test artifacts are kept under:
 surrogate_model/global_symbolic_regression/archive/smoke_tests/artifacts/
 ```
 
-MLP current known artifact:
+MLP current formal artifact root and latest verified run:
 
 ```text
-surrogate_model/MLP/artifacts/wool_baseline_mlp_small
+surrogate_model/MLP/artifacts/wool_baseline_mlp_runs/
+  20260808_113400_run2_baseline/
 ```
+
+The old `wool_baseline_mlp_small` output is a historical smoke result, not the
+current comparison baseline.
 
 ## Run Logic
 
@@ -726,9 +779,12 @@ Current global SR training/evaluation sequence:
    --max-complexity 21
 ```
 
-MLP still does not have a formal run2 comparison result. The run2 datasets
-already exist; do not regenerate them unless intentionally creating another
-dataset run.
+MLP, segmented SR, and global SR now all have completed run2 results tied to
+the same `shared_curve_split.json`. The three runs use identical source-curve
+membership: 700 training curves, 150 validation curves, and 150 test curves.
+The next stage is metric harmonization and horizontal comparison; retraining is
+not required merely to establish split comparability. Do not regenerate the
+datasets unless intentionally creating another dataset run.
 
 ## Git And GitHub Sync Policy
 
@@ -864,67 +920,65 @@ used as active output locations.
 
 ## Current Git State
 
-The local hard-drive clone at `C:/MasterThesis_Project` was last verified on
-2026-08-03 after completing the run2 data-generation, segmented-training, and
-evaluation workflow:
+The local hard-drive clone at `C:/MasterThesis_Project_alpha` was last verified
+on 2026-08-08 after the root-rename validation runs:
 
 ```text
 current branch: agent/add-segmented-evaluation
-remote branch before the run2 commit: 024151a Add segmented SR max-complexity evaluation
-main and origin/main: 71c905e Add local disk segmented SR smoke test artifacts
-draft PR: #1, OPEN and MERGEABLE, targeting main
-completed run2 work included in the next/current local commit:
-  surrogate_model/datasets/run2/
-  surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_pysr_runs/20260803_run2_iter100_pop12_ps100_size28_allrows_serial/
-  surrogate_model/segmented_symbolic_regression/artifacts/wool_segmented_symbolic_candidate_evaluation_runs/20260803_run2_maxc16/
-latest curated interface-validation artifacts included in the current local commit:
-  segmented training: 20260803_run2_iface_full/
-  segmented evaluation: 20260803_run2_iface_maxc16/
-remaining untracked local content intentionally excluded from commits:
-  surrogate_model/symbolic_regression/ (temporary smoke output only)
-  incomplete long-path attempt: 20260803_115855_run2_iter100_pop12_ps100_size28_allrows_interface_validation_full_serial/
-  raw pysr_runs/ output and models/*.pkl from 20260803_run2_iface_full/
-global-SR work included in the current local commit:
-  global training/evaluation entry points and run2 configuration
-  global smoke-test archive
-  formal training: 20260803_run2_full/
-  formal evaluations: 20260803_run2_maxc16/ and 20260803_run2_maxc21/
+tracking branch: origin/agent/add-segmented-evaluation
+working tree: dirty; it contains intentional code, split, artifact, and handoff changes
+latest MLP run: 20260808_113400_run2_baseline
+latest segmented shared-split run: 20260808_113903_run2_rootrename
+latest segmented shared-split evaluation: 20260808_120119_run2_rootrename_c16
+latest global shared-split run: 20260808_121026_run2
+latest global shared-split evaluation: 20260808_123902_run2_c21
 ```
+
+Do not discard, reset, or overwrite the current dirty worktree. Historical
+smoke artifacts, raw PySR outputs, and user changes are mixed with the current
+uncommitted work and must be curated intentionally before committing.
 
 If a future conversation starts from this handoff, first run:
 
 ```powershell
-cd C:\MasterThesis_Project
+cd C:\MasterThesis_Project_alpha
 git status --short --branch
 git pull --ff-only
 ```
 
-Then check the current state of PR #1 and whether the local branch has been
-pushed before choosing a branch or making new commits. At the time run2 was
-completed, PR #1 contained only the earlier run1 evaluation; it will include
-run2 only after the new commit is pushed. Do not discard the untracked smoke
-directory.
+Because the working tree is currently dirty, do not run `git pull` until the
+local changes have been reviewed and safely committed or otherwise protected.
+Remote/PR state was not revalidated during the 2026-08-08 model runs.
 
 ## Current Maturity Summary
 
-Current segmented SR is mature enough for reporting-level inspection. Its
-recommended evaluation is the `max_complexity=16` selected-candidate evaluation
-listed above for run2. The full run2 training and evaluation completed
-successfully on this machine.
+All three model branches now have complete run2 runs using the same source-curve
+split. The workspace rename from `MasterThesis_Project` to
+`MasterThesis_Project_alpha` has been validated end to end for MLP, segmented
+SR, and global SR. No model-code or hyperparameter change was needed. The only
+runtime path accommodation was using short SR run-directory names to remain
+below the Windows PySR path limit.
 
-Global SR is now also mature enough for reporting-level inspection. Its
-recommended run2 result is the `max_complexity=21` evaluation listed above.
-The full run2 training and evaluation completed successfully on this machine.
+Current comparable test results are:
 
-MLP has a generated run2 teacher dataset, but no formal run2 training. The old
-small baseline artifact is not at the same comparison maturity as segmented SR.
+```text
+model          RMSE          MAE           R2
+MLP            0.00237717    0.00169586    0.99847841
+Segmented SR   0.02719627    0.02004433    0.98842683
+Global SR      0.04422062    0.03426175    0.96940268
+```
+
+These values share test curve membership, but the reporting protocol still
+needs one explicit harmonization pass before presenting the final comparison:
+MLP currently reports its native curve prediction metrics, while SR evaluation
+explicitly clips predictions to `[0,1]` and retains raw/clipped diagnostics.
 
 Immediate project next steps are:
 
 ```text
-1. Review the run2 segmented and global SR artifacts and evaluations.
-2. Decide how to commit/publish the global SR implementation and results.
-3. Produce a formal MLP result on datasets/run2 using a comparison protocol
-   compatible with the SR branches.
-4. Then perform the three-model horizontal comparison.
+1. Define and compute identical raw and clipped test metrics for all models.
+2. Produce a three-model comparison table and common diagnostic figures.
+3. Review segmented boundary discontinuities and global-formula complexity.
+4. Only after the untouched baselines are documented, decide whether to tune MLP.
+5. Curate the dirty worktree and decide which code/datasets/artifacts to commit.
 ```

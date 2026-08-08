@@ -12,16 +12,15 @@ surrogate_root = fileparts(script_dir);
 project_root = fileparts(surrogate_root);
 
 %% Configuration
-dataset_file = fullfile(surrogate_root, 'datasets', 'run1', 'MLP', 'Wool_surrogate_dataset.mat');
+dataset_file = fullfile(surrogate_root, 'datasets', 'run2', 'MLP', 'Wool_surrogate_dataset.mat');
+shared_split_file = fullfile(surrogate_root, 'datasets', 'run2', 'shared_curve_split.json');
 
 experiment_name = 'wool_baseline_mlp';
-artifacts_dir = fullfile(surrogate_root, 'MLP', 'artifacts', experiment_name);
+artifacts_root = fullfile(surrogate_root, 'MLP', 'artifacts', 'wool_baseline_mlp_runs');
+artifacts_dir = '';
 figures_dir = fullfile(artifacts_dir, 'figures');
 artifacts_dir_overridden = false;
 figures_dir_overridden = false;
-
-split_ratios = struct('train', 0.70, 'validation', 0.15, 'test', 0.15);
-split_seed = 123;
 
 apply_log10_to_inputs = true;
 log10_feature_indices = [3, 5, 6, 7];
@@ -45,7 +44,9 @@ scatter_max_points = 3000;
 
 if exist('surrogate_training_config', 'var')
     if isfield(surrogate_training_config, 'dataset_file'), dataset_file = surrogate_training_config.dataset_file; end
+    if isfield(surrogate_training_config, 'shared_split_file'), shared_split_file = surrogate_training_config.shared_split_file; end
     if isfield(surrogate_training_config, 'experiment_name'), experiment_name = surrogate_training_config.experiment_name; end
+    if isfield(surrogate_training_config, 'artifacts_root'), artifacts_root = surrogate_training_config.artifacts_root; end
     if isfield(surrogate_training_config, 'artifacts_dir')
         artifacts_dir = surrogate_training_config.artifacts_dir;
         artifacts_dir_overridden = true;
@@ -54,8 +55,6 @@ if exist('surrogate_training_config', 'var')
         figures_dir = surrogate_training_config.figures_dir;
         figures_dir_overridden = true;
     end
-    if isfield(surrogate_training_config, 'split_ratios'), split_ratios = surrogate_training_config.split_ratios; end
-    if isfield(surrogate_training_config, 'split_seed'), split_seed = surrogate_training_config.split_seed; end
     if isfield(surrogate_training_config, 'apply_log10_to_inputs'), apply_log10_to_inputs = surrogate_training_config.apply_log10_to_inputs; end
     if isfield(surrogate_training_config, 'log10_feature_indices'), log10_feature_indices = surrogate_training_config.log10_feature_indices; end
     if isfield(surrogate_training_config, 'standardize_inputs'), standardize_inputs = surrogate_training_config.standardize_inputs; end
@@ -75,7 +74,13 @@ if exist('surrogate_training_config', 'var')
 end
 
 if ~artifacts_dir_overridden
-    artifacts_dir = fullfile(surrogate_root, 'MLP', 'artifacts', experiment_name);
+    timestamp = char(datetime('now', 'Format', 'yyyyMMdd_HHmmss'));
+    run_folder_name = sprintf('%s_%s', timestamp, sanitize_run_name(experiment_name));
+    artifacts_dir = unique_run_directory(artifacts_root, run_folder_name);
+elseif directory_contains_files(artifacts_dir)
+    error(['Refusing to overwrite an existing MLP artifact directory: %s. ', ...
+           'Choose a new artifacts_dir or omit it to use an automatic unique run directory.'], ...
+          artifacts_dir);
 end
 
 if ~figures_dir_overridden
@@ -95,8 +100,8 @@ if ~exist(dataset_file, 'file')
     error('Dataset file not found: %s', dataset_file);
 end
 
-if abs(split_ratios.train + split_ratios.validation + split_ratios.test - 1.0) > 1e-12
-    error('Split ratios must sum to 1.');
+if ~exist(shared_split_file, 'file')
+    error('Shared curve split file not found: %s', shared_split_file);
 end
 
 if ~exist(artifacts_dir, 'dir')
@@ -135,8 +140,8 @@ num_features = size(X, 2);
 num_outputs = size(Y, 2);
 
 %% Split dataset
-rng(split_seed);
-split_indices = stratified_holdout_split(sample_metadata, split_ratios);
+[split_indices, shared_split_info] = load_shared_curve_split( ...
+    shared_split_file, num_samples, dataset_file);
 
 X_train_raw = X(split_indices.train, :);
 Y_train_raw = Y(split_indices.train, :);
@@ -208,6 +213,7 @@ evaluation.test_curve_mae = test_curve_mae;
 evaluation.worst_case_order = worst_case_order;
 evaluation.sorted_test_mae = sorted_test_mae;
 evaluation.split_indices = split_indices;
+evaluation.shared_split_info = shared_split_info;
 
 %% Save artifacts
 model_artifact = struct();
@@ -217,7 +223,10 @@ model_artifact.preprocessing = preprocessing;
 model_artifact.metrics = metrics;
 model_artifact.dataset_file = dataset_file;
 model_artifact.dataset_info = dataset_info;
+model_artifact.experiment_name = experiment_name;
+model_artifact.artifacts_dir = artifacts_dir;
 model_artifact.split_indices = split_indices;
+model_artifact.shared_split_info = shared_split_info;
 model_artifact.hidden_layer_sizes = hidden_layer_sizes;
 model_artifact.activation_name = activation_name;
 model_artifact.dropout_probability = dropout_probability;
@@ -226,7 +235,8 @@ model_artifact.training_config = struct( ...
     'mini_batch_size', mini_batch_size, ...
     'initial_learning_rate', initial_learning_rate, ...
     'validation_patience', validation_patience, ...
-    'split_seed', split_seed, ...
+    'shared_split_file', shared_split_file, ...
+    'shared_split_hash', shared_split_info.split_hash, ...
     'training_seed', training_seed);
 
 save(fullfile(artifacts_dir, 'surrogate_baseline_model.mat'), 'model_artifact', '-v7.3');
@@ -236,13 +246,14 @@ save(fullfile(artifacts_dir, 'surrogate_baseline_predictions.mat'), ...
     'X_train_raw', 'X_validation_raw', 'X_test_raw', ...
     'freq_grid', 'evaluation', '-v7.3');
 
-write_metrics_report(fullfile(artifacts_dir, 'metrics_report.txt'), metrics, dataset_info, num_samples);
+write_metrics_report(fullfile(artifacts_dir, 'metrics_report.txt'), ...
+    metrics, dataset_info, num_samples, shared_split_info);
 
 %% Generate diagnostic plots
 plot_training_history(training_info, figures_dir);
 plot_prediction_scatter(Y_test_raw, Y_test_pred, figures_dir, scatter_max_points);
 plot_mean_error_vs_frequency(freq_grid, Y_test_raw, Y_test_pred, figures_dir);
-plot_random_curve_comparisons(freq_grid, Y_test_raw, Y_test_pred, figures_dir, num_random_curve_plots, split_seed);
+plot_random_curve_comparisons(freq_grid, Y_test_raw, Y_test_pred, figures_dir, num_random_curve_plots, shared_split_info.split_seed);
 plot_worst_case_curves(freq_grid, Y_test_raw, Y_test_pred, test_curve_mae, figures_dir, num_worst_case_plots);
 plot_curve_error_histogram(test_curve_mae, figures_dir);
 
@@ -252,38 +263,94 @@ fprintf('Train MAE: %.6f | Validation MAE: %.6f | Test MAE: %.6f\n', ...
 fprintf('Artifacts saved to %s\n', artifacts_dir);
 
 %% Local functions
-function split_indices = stratified_holdout_split(sample_metadata, split_ratios)
-    porosity_labels = string({sample_metadata.porosityfolder});
-    unique_labels = unique(porosity_labels);
+function safe_name = sanitize_run_name(value)
+    safe_name = regexprep(lower(char(value)), '[^a-z0-9]+', '_');
+    safe_name = regexprep(safe_name, '^_+|_+$', '');
+    if isempty(safe_name)
+        safe_name = 'mlp_run';
+    end
+end
 
-    train_idx = [];
-    validation_idx = [];
-    test_idx = [];
+function output_dir = unique_run_directory(output_root, run_folder_name)
+    output_dir = fullfile(output_root, run_folder_name);
+    if ~exist(output_dir, 'dir')
+        return;
+    end
 
-    for i = 1:numel(unique_labels)
-        label = unique_labels(i);
-        label_idx = find(porosity_labels == label);
-        label_idx = label_idx(randperm(numel(label_idx)));
-
-        n_label = numel(label_idx);
-        n_train = floor(split_ratios.train * n_label);
-        n_validation = floor(split_ratios.validation * n_label);
-        n_test = n_label - n_train - n_validation;
-
-        if n_train < 1 || n_validation < 1 || n_test < 1
-            error(['Not enough samples in porosity group %s to satisfy the current split ratios. ', ...
-                   'Increase n_samples or reduce the number of groups.'], label);
+    for suffix = 2:999
+        candidate = fullfile(output_root, sprintf('%s_%02d', run_folder_name, suffix));
+        if ~exist(candidate, 'dir')
+            output_dir = candidate;
+            return;
         end
+    end
+    error('Could not create a unique MLP run directory under: %s', output_root);
+end
 
-        train_idx = [train_idx; label_idx(1:n_train)]; %#ok<AGROW>
-        validation_idx = [validation_idx; label_idx(n_train+1:n_train+n_validation)]; %#ok<AGROW>
-        test_idx = [test_idx; label_idx(n_train+n_validation+1:end)]; %#ok<AGROW>
+function has_files = directory_contains_files(directory_path)
+    if ~exist(directory_path, 'dir')
+        has_files = false;
+        return;
+    end
+    entries = dir(fullfile(directory_path, '**', '*'));
+    has_files = any(~[entries.isdir]);
+end
+
+function [split_indices, split_info] = load_shared_curve_split(split_file, num_samples, dataset_file)
+    split_data = jsondecode(fileread(split_file));
+    required_fields = { ...
+        'schema_version', 'dataset_run', 'source_curve_count', 'index_base', ...
+        'split_seed', 'split_hash', 'frequency_grid_independent', ...
+        'train_curve_indices', 'validation_curve_indices', 'test_curve_indices'};
+    for i = 1:numel(required_fields)
+        if ~isfield(split_data, required_fields{i})
+            error('Shared curve split is missing required field: %s', required_fields{i});
+        end
+    end
+
+    if split_data.schema_version ~= 1
+        error('Unsupported shared curve split schema: %g', split_data.schema_version);
+    end
+    if split_data.index_base ~= 1
+        error('Shared curve split indices must be 1-based for MATLAB.');
+    end
+    if split_data.source_curve_count ~= num_samples
+        error(['Shared curve split expects %d source curves, but the dataset contains %d. ', ...
+               'Regenerate the split for this curve set.'], ...
+              split_data.source_curve_count, num_samples);
+    end
+    if ~split_data.frequency_grid_independent
+        error('Shared curve split must be frequency-grid independent.');
     end
 
     split_indices = struct();
-    split_indices.train = train_idx(randperm(numel(train_idx)));
-    split_indices.validation = validation_idx(randperm(numel(validation_idx)));
-    split_indices.test = test_idx(randperm(numel(test_idx)));
+    split_indices.train = double(split_data.train_curve_indices(:));
+    split_indices.validation = double(split_data.validation_curve_indices(:));
+    split_indices.test = double(split_data.test_curve_indices(:));
+
+    combined = [split_indices.train; split_indices.validation; split_indices.test];
+    if numel(combined) ~= num_samples || ...
+            ~isequal(sort(combined), (1:num_samples).') || ...
+            numel(unique(combined)) ~= num_samples
+        error(['Shared split indices must be disjoint and cover every source curve ', ...
+               'from 1 to %d exactly once.'], num_samples);
+    end
+
+    normalized_dataset_path = strrep(char(dataset_file), '\', '/');
+    expected_run_token = ['/datasets/' char(split_data.dataset_run) '/'];
+    if ~contains(lower(normalized_dataset_path), lower(expected_run_token))
+        error('Dataset file does not match shared split dataset_run %s: %s', ...
+              split_data.dataset_run, dataset_file);
+    end
+
+    split_info = struct();
+    split_info.split_file = char(split_file);
+    split_info.split_hash = char(split_data.split_hash);
+    split_info.dataset_run = char(split_data.dataset_run);
+    split_info.schema_version = split_data.schema_version;
+    split_info.source_curve_count = split_data.source_curve_count;
+    split_info.split_seed = split_data.split_seed;
+    split_info.frequency_grid_independent = logical(split_data.frequency_grid_independent);
 end
 
 function [X_out, preprocessing] = fit_transform_inputs(X_in, apply_log10_to_inputs, log10_feature_indices, standardize_inputs)
@@ -410,7 +477,7 @@ function metrics = compute_regression_metrics(y_true, y_pred)
     end
 end
 
-function write_metrics_report(report_file, metrics, dataset_info, num_samples)
+function write_metrics_report(report_file, metrics, dataset_info, num_samples, shared_split_info)
     fid = fopen(report_file, 'w');
     if fid == -1
         error('Could not open metrics report for writing: %s', report_file);
@@ -422,7 +489,10 @@ function write_metrics_report(report_file, metrics, dataset_info, num_samples)
     fprintf(fid, 'Fiber: %s\n', dataset_info.fiberfolder);
     fprintf(fid, 'Total Samples: %d\n', num_samples);
     fprintf(fid, 'Frequency Range: %.2f Hz to %.2f Hz\n', dataset_info.freq_min, dataset_info.freq_max);
-    fprintf(fid, 'Frequency Points: %d\n\n', dataset_info.n_freq);
+    fprintf(fid, 'Frequency Points: %d\n', dataset_info.n_freq);
+    fprintf(fid, 'Dataset Run: %s\n', shared_split_info.dataset_run);
+    fprintf(fid, 'Shared Split File: %s\n', shared_split_info.split_file);
+    fprintf(fid, 'Shared Split Hash: %s\n\n', shared_split_info.split_hash);
 
     fprintf(fid, 'Train Metrics\n');
     fprintf(fid, 'MSE  : %.8e\n', metrics.train.mse);
@@ -444,7 +514,7 @@ function write_metrics_report(report_file, metrics, dataset_info, num_samples)
 end
 
 function plot_training_history(training_info, figures_dir)
-    fig = figure('Visible', 'off', 'Color', 'w');
+    fig = figure('Visible', 'off', 'Color', 'w', 'Theme', 'light');
     hold on;
 
     if isfield(training_info, 'TrainingLoss') && ~isempty(training_info.TrainingLoss)
@@ -479,7 +549,7 @@ function plot_prediction_scatter(y_true, y_pred, figures_dir, scatter_max_points
         y_pred_vec = y_pred_vec(idx);
     end
 
-    fig = figure('Visible', 'off', 'Color', 'w');
+    fig = figure('Visible', 'off', 'Color', 'w', 'Theme', 'light');
     scatter(y_true_vec, y_pred_vec, 12, 'filled', 'MarkerFaceAlpha', 0.35);
     hold on;
 
@@ -501,7 +571,7 @@ function plot_mean_error_vs_frequency(freq_grid, y_true, y_pred, figures_dir)
     mae_by_frequency = mean(abs(y_pred - y_true), 1);
     rmse_by_frequency = sqrt(mean((y_pred - y_true).^2, 1));
 
-    fig = figure('Visible', 'off', 'Color', 'w');
+    fig = figure('Visible', 'off', 'Color', 'w', 'Theme', 'light');
     plot(freq_grid, mae_by_frequency, 'LineWidth', 1.75, 'DisplayName', 'MAE');
     hold on;
     plot(freq_grid, rmse_by_frequency, 'LineWidth', 1.75, 'DisplayName', 'RMSE');
@@ -522,7 +592,7 @@ function plot_random_curve_comparisons(freq_grid, y_true, y_pred, figures_dir, n
     rng(random_seed + 1000);
     selected_idx = randperm(n_test, num_to_plot);
 
-    fig = figure('Visible', 'off', 'Color', 'w');
+    fig = figure('Visible', 'off', 'Color', 'w', 'Theme', 'light');
     tiledlayout(num_to_plot, 1, 'TileSpacing', 'compact', 'Padding', 'compact');
 
     for i = 1:num_to_plot
@@ -547,7 +617,7 @@ function plot_worst_case_curves(freq_grid, y_true, y_pred, curve_mae, figures_di
     [~, sorted_idx] = sort(curve_mae, 'descend');
     num_to_plot = min(num_worst_case_plots, numel(sorted_idx));
 
-    fig = figure('Visible', 'off', 'Color', 'w');
+    fig = figure('Visible', 'off', 'Color', 'w', 'Theme', 'light');
     tiledlayout(num_to_plot, 1, 'TileSpacing', 'compact', 'Padding', 'compact');
 
     for i = 1:num_to_plot
@@ -570,7 +640,7 @@ function plot_worst_case_curves(freq_grid, y_true, y_pred, curve_mae, figures_di
 end
 
 function plot_curve_error_histogram(curve_mae, figures_dir)
-    fig = figure('Visible', 'off', 'Color', 'w');
+    fig = figure('Visible', 'off', 'Color', 'w', 'Theme', 'light');
     histogram(curve_mae, 30);
     xlabel('Per-Curve MAE');
     ylabel('Count');

@@ -21,9 +21,17 @@ import h5py
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import train_test_split
-
 from global_run_paths import default_dataset_run, resolve_dataset_file
+
+
+SURROGATE_ROOT = Path(__file__).resolve().parents[1]
+if str(SURROGATE_ROOT) not in sys.path:
+    sys.path.insert(0, str(SURROGATE_ROOT))
+
+from shared_split_utils import (  # noqa: E402
+    resolve_and_load_shared_split,
+    source_curve_mask,
+)
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -72,6 +80,12 @@ def parse_args() -> argparse.Namespace:
         help="Optional explicit dataset path. Standard datasets/run*/ paths must match --dataset-run.",
     )
     parser.add_argument(
+        "--split-file",
+        type=Path,
+        default=None,
+        help="Shared source-curve split JSON. Defaults to datasets/<run>/shared_curve_split.json.",
+    )
+    parser.add_argument(
         "--output-root",
         type=Path,
         default=DEFAULT_OUTPUT_ROOT,
@@ -89,7 +103,6 @@ def parse_args() -> argparse.Namespace:
         help="Optional readable suffix for the automatically created run directory.",
     )
     parser.add_argument("--random-seed", type=int, default=42)
-    parser.add_argument("--test-size", type=float, default=0.2)
     parser.add_argument(
         "--max-samples",
         type=int,
@@ -202,6 +215,7 @@ def read_symbolic_dataset(dataset_file: Path) -> dict[str, Any]:
         x_symbolic = read_numeric_dataset(file["X_symbolic"])
         y_symbolic = np.array(file["y_symbolic"]).reshape(-1)
         segment_index = np.array(file["segment_index"]).reshape(-1).astype(int)
+        source_curve_index = np.array(file["source_curve_index"]).reshape(-1).astype(int)
 
         info_group = file["symbolic_dataset_info"]
         feature_names = decode_matlab_string_array(file, info_group["feature_names"])
@@ -216,6 +230,8 @@ def read_symbolic_dataset(dataset_file: Path) -> dict[str, Any]:
         raise ValueError("X_symbolic row count does not match y_symbolic length.")
     if x_symbolic.shape[0] != segment_index.shape[0]:
         raise ValueError("X_symbolic row count does not match segment_index length.")
+    if x_symbolic.shape[0] != source_curve_index.shape[0]:
+        raise ValueError("X_symbolic row count does not match source_curve_index length.")
 
     unique_indices = np.unique(segment_index)
     if unique_indices.tolist() != [1] or len(segment_names) != 1 or segment_bounds.shape != (1, 2):
@@ -228,6 +244,7 @@ def read_symbolic_dataset(dataset_file: Path) -> dict[str, Any]:
         "X": x_symbolic,
         "y": y_symbolic,
         "segment_index": segment_index,
+        "source_curve_index": source_curve_index,
         "feature_names": feature_names,
         "segment_bounds": segment_bounds,
         "segment_names": segment_names,
@@ -310,21 +327,29 @@ def train_global_model(
 ) -> dict[str, Any]:
     global_name = data["segment_names"][0]
     bounds = data["segment_bounds"][0]
-    indices = np.arange(data["X"].shape[0])
+    train_indices = np.flatnonzero(
+        source_curve_mask(data["source_curve_index"], data["shared_split"], "train")
+    )
+    validation_indices = np.flatnonzero(
+        source_curve_mask(data["source_curve_index"], data["shared_split"], "validation")
+    )
+    test_indices = np.flatnonzero(
+        source_curve_mask(data["source_curve_index"], data["shared_split"], "test")
+    )
 
     rng = np.random.default_rng(args.random_seed)
-    if args.max_samples is not None and indices.size > args.max_samples:
-        indices = rng.choice(indices, size=args.max_samples, replace=False)
+    if args.max_samples is not None and train_indices.size > args.max_samples:
+        train_indices = rng.choice(train_indices, size=args.max_samples, replace=False)
 
-    X = data["X"][indices, :]
-    y = data["y"][indices]
+    if min(train_indices.size, validation_indices.size, test_indices.size) == 0:
+        raise ValueError("Global symbolic dataset has an empty shared split partition.")
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=args.test_size,
-        random_state=args.random_seed,
-    )
+    X_train = data["X"][train_indices, :]
+    y_train = data["y"][train_indices]
+    X_validation = data["X"][validation_indices, :]
+    y_validation = data["y"][validation_indices]
+    X_test = data["X"][test_indices, :]
+    y_test = data["y"][test_indices]
 
     global_slug = sanitize_name(global_name)
     equations_dir = output_dir / "equations"
@@ -336,12 +361,15 @@ def train_global_model(
 
     print(
         f"\nTraining global model: {global_name} "
-        f"({bounds[0]:.2f}-{bounds[1]:.2f} Hz), rows={len(indices)}"
+        f"({bounds[0]:.2f}-{bounds[1]:.2f} Hz), "
+        f"train/validation/test rows="
+        f"{len(train_indices)}/{len(validation_indices)}/{len(test_indices)}"
     )
     model = build_model(args, pysr_runs_dir, global_slug)
     model.fit(X_train, y_train, variable_names=data["pysr_variable_names"])
 
     train_pred = model.predict(X_train)
+    validation_pred = model.predict(X_validation)
     test_pred = model.predict(X_test)
     selected = model.get_best()
 
@@ -357,14 +385,20 @@ def train_global_model(
         "global_name": global_name,
         "lower_hz": float(bounds[0]),
         "upper_hz": float(bounds[1]),
+        "shared_split_file": data["shared_split"]["split_file"],
+        "shared_split_hash": data["shared_split"]["split_hash"],
         "equation": str(selected["equation"]),
         "complexity": int(selected["complexity"]),
         "loss": float(selected["loss"]),
         "score": float(selected["score"]) if "score" in selected and pd.notna(selected["score"]) else None,
-        "n_rows_used": int(len(indices)),
+        "n_rows_used": int(
+            len(train_indices) + len(validation_indices) + len(test_indices)
+        ),
         "n_train": int(len(y_train)),
+        "n_validation": int(len(y_validation)),
         "n_test": int(len(y_test)),
         "train_metrics": regression_metrics(y_train, train_pred),
+        "validation_metrics": regression_metrics(y_validation, validation_pred),
         "test_metrics": regression_metrics(y_test, test_pred),
         "equations_csv": str(equations_csv),
         "model_file": str(model_path),
@@ -388,6 +422,9 @@ def main() -> None:
 
     args.output_dir = resolve_output_dir(args)
     data = read_symbolic_dataset(args.dataset_file)
+    data["shared_split"] = resolve_and_load_shared_split(
+        resolved_dataset_run, args.split_file, data["num_curve_samples"]
+    )
     validate_output_path_length(args.output_dir, data["segment_names"][0])
     args.output_dir.mkdir(parents=True, exist_ok=True)
     data["pysr_variable_names"] = make_pysr_variable_names(data["feature_names"])
@@ -395,6 +432,8 @@ def main() -> None:
     metadata = {
         "dataset_file": str(args.dataset_file),
         "dataset_run": resolved_dataset_run,
+        "shared_split_file": data["shared_split"]["split_file"],
+        "shared_split_hash": data["shared_split"]["split_hash"],
         "fiberfolder": data["fiberfolder"],
         "num_curve_samples": data["num_curve_samples"],
         "num_symbolic_samples": data["num_symbolic_samples"],
@@ -423,8 +462,10 @@ def main() -> None:
                 "complexity": item["complexity"],
                 "loss": item["loss"],
                 "train_rmse": item["train_metrics"]["rmse"],
+                "validation_rmse": item["validation_metrics"]["rmse"],
                 "test_rmse": item["test_metrics"]["rmse"],
                 "train_mae": item["train_metrics"]["mae"],
+                "validation_mae": item["validation_metrics"]["mae"],
                 "test_mae": item["test_metrics"]["mae"],
                 "test_r2": item["test_metrics"]["r2"],
                 "n_rows_used": item["n_rows_used"],

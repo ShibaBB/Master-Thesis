@@ -9,6 +9,12 @@
 - The segment-wise PySR training and candidate-evaluation workflow is implemented.
 - The active full symbolic dataset is generated from `datasets/run2/MLP/Wool_surrogate_dataset.mat`.
 - All active segmented-SR entry points share `dataset_run_config.json`; its current default is `run2`.
+- Training and evaluation now also require the run-level shared source-curve
+  split at `datasets/run2/shared_curve_split.json`.
+- Scalar rows are assigned through `source_curve_index`: training uses train
+  curves, candidate selection uses validation curves, and final evaluation uses
+  test curves. Training/evaluation metadata records and validates the split
+  path and SHA-256 hash.
 - Standard dataset paths are run-validated, and evaluation rejects training artifacts from a different run.
 - Early smoke-test material has been archived under [archive/smoke_tests](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/segmented_symbolic_regression/archive/smoke_tests/README.md:1).
 
@@ -92,6 +98,13 @@ The current default generated symbolic dataset is:
 - `train_segmented_symbolic_models.py` now creates a unique timestamped output directory by default under `artifacts/wool_segmented_symbolic_pysr_runs`.
 - `evaluate_segmented_symbolic_candidates.py` now creates a unique timestamped output directory by default under `artifacts/wool_segmented_symbolic_candidate_evaluation_runs`.
 - If `--training-dir` is omitted during evaluation, the latest training run matching the selected dataset run is used.
+- A five-segment shared-split smoke training/evaluation completed successfully:
+  the 700/150/150 curve split maps to 44800/9600/9600 scalar rows over the
+  current 64-point grid, with no source curve crossing partitions.
+
+The existing reporting-level segmented artifacts were trained before this
+shared-split protocol. They remain historical and must not be used in the final
+horizontal comparison. A new full run is required.
 
 Current useful artifact locations:
 

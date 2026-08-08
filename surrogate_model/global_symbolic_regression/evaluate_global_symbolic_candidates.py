@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -33,6 +34,17 @@ from global_run_paths import (
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+SURROGATE_ROOT = SCRIPT_DIR.parent
+if str(SURROGATE_ROOT) not in sys.path:
+    sys.path.insert(0, str(SURROGATE_ROOT))
+
+from shared_split_utils import (  # noqa: E402
+    resolve_and_load_shared_split,
+    source_curve_mask,
+    subset_symbolic_data,
+    validate_training_split,
+)
+
 DEFAULT_TRAINING_ROOT = SCRIPT_DIR / "artifacts" / "wool_global_symbolic_pysr_runs"
 DEFAULT_OUTPUT_ROOT = SCRIPT_DIR / "artifacts" / "wool_global_symbolic_candidate_evaluation_runs"
 OUTPUT_LOWER_BOUND = 0.0
@@ -53,6 +65,12 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=None,
         help="Optional explicit dataset path. Standard datasets/run*/ paths must match --dataset-run.",
+    )
+    parser.add_argument(
+        "--split-file",
+        type=Path,
+        default=None,
+        help="Shared source-curve split JSON. Defaults to datasets/<run>/shared_curve_split.json.",
     )
     parser.add_argument(
         "--training-root",
@@ -350,8 +368,8 @@ def choose_candidate(metrics: pd.DataFrame, args: argparse.Namespace) -> int:
         return args.selected_candidate
 
     valid = metrics[metrics["eval_status"] == "ok"].copy()
-    if args.selection_rule == "best_score" and "pysr_score" in valid:
-        valid = valid.sort_values(["pysr_score", "rmse"], ascending=[False, True])
+    if args.selection_rule == "best_score":
+        valid = valid.sort_values(["r2", "rmse"], ascending=[False, True])
     elif args.selection_rule == "max_complexity":
         within = valid[valid["complexity"] <= args.max_complexity]
         if not within.empty:
@@ -495,25 +513,49 @@ def main() -> None:
     figures_dir.mkdir(parents=True, exist_ok=True)
 
     data = read_symbolic_dataset(args.dataset_file)
+    num_curve_samples = int(np.unique(data["source_curve_index"]).size)
+    shared_split = resolve_and_load_shared_split(
+        resolved_dataset_run, args.split_file, num_curve_samples
+    )
+    validate_training_split(args.training_dir, shared_split)
+    validation_data = subset_symbolic_data(
+        data,
+        source_curve_mask(data["source_curve_index"], shared_split, "validation"),
+    )
+    test_data = subset_symbolic_data(
+        data,
+        source_curve_mask(data["source_curve_index"], shared_split, "test"),
+    )
     variable_names = make_pysr_variable_names(data["feature_names"])
 
-    metrics, _ = evaluate_global_candidates(data, args.training_dir, variable_names)
+    metrics, _ = evaluate_global_candidates(
+        validation_data, args.training_dir, variable_names
+    )
+    metrics["evaluation_split"] = "validation"
     metrics.to_csv(args.output_dir / "candidate_metrics.csv", index=False)
     plot_complexity_vs_error(metrics, figures_dir)
 
     selected_candidate = choose_candidate(metrics, args)
+    _, validation_y_pred, _ = evaluate_selected_candidate(
+        validation_data, metrics, selected_candidate, variable_names
+    )
+    validation_metrics = regression_metrics(validation_data["y"], validation_y_pred)
     raw_y_pred_all, y_pred_all, selected_df = evaluate_selected_candidate(
-        data, metrics, selected_candidate, variable_names
+        test_data, metrics, selected_candidate, variable_names
     )
     selected_df.to_csv(args.output_dir / "selected_candidate.csv", index=False)
 
-    selected_metrics = regression_metrics(data["y"], y_pred_all)
+    selected_metrics = regression_metrics(test_data["y"], y_pred_all)
     raw_physical_diagnostics = prediction_diagnostics(raw_y_pred_all)
     physical_diagnostics = prediction_diagnostics(y_pred_all)
     selected_summary = {
         "dataset_file": str(args.dataset_file),
         "dataset_run": resolved_dataset_run,
+        "shared_split_file": shared_split["split_file"],
+        "shared_split_hash": shared_split["split_hash"],
         "training_dir": str(args.training_dir),
+        "candidate_selection_split": "validation",
+        "final_evaluation_split": "test",
         "selection_rule": args.selection_rule,
         "output_postprocessing": {
             "method": "clip",
@@ -527,16 +569,17 @@ def main() -> None:
         "feature_names": data["feature_names"],
         "pysr_variable_names": variable_names,
         "overall_metrics": selected_metrics,
+        "validation_selection_metrics": validation_metrics,
         "raw_prediction_diagnostics": raw_physical_diagnostics,
         "prediction_diagnostics": physical_diagnostics,
     }
     with (args.output_dir / "selected_global_summary.json").open("w", encoding="utf-8") as file:
         json.dump(selected_summary, file, indent=2)
 
-    freq_values = data["X"][:, -1]
-    plot_selected_scatter(data["y"], y_pred_all, figures_dir, args.max_plot_points, args.random_seed)
-    plot_error_vs_frequency(freq_values, y_pred_all - data["y"], figures_dir, args.max_plot_points, args.random_seed)
-    plot_curve_comparisons(data, y_pred_all, figures_dir, args.num_curves, args.random_seed)
+    freq_values = test_data["X"][:, -1]
+    plot_selected_scatter(test_data["y"], y_pred_all, figures_dir, args.max_plot_points, args.random_seed)
+    plot_error_vs_frequency(freq_values, y_pred_all - test_data["y"], figures_dir, args.max_plot_points, args.random_seed)
+    plot_curve_comparisons(test_data, y_pred_all, figures_dir, args.num_curves, args.random_seed)
 
     print("Global symbolic candidate evaluation complete.")
     print(f"Candidate metrics: {args.output_dir / 'candidate_metrics.csv'}")
