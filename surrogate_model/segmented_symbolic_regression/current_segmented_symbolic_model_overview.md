@@ -17,7 +17,7 @@ Compared with the MLP branch, this model does not predict a full absorption curv
 The current teacher dataset is:
 
 ```text
-surrogate_model/datasets/run1/MLP/Wool_surrogate_dataset.mat
+surrogate_model/datasets/run2/MLP/Wool_surrogate_dataset.mat
 ```
 
 It contains:
@@ -30,7 +30,7 @@ It contains:
 The symbolic dataset generated from it is:
 
 ```text
-surrogate_model/datasets/run1/segmented_SR/Wool_symbolic_segmented.mat
+surrogate_model/datasets/run2/segmented_SR/Wool_symbolic_segmented.mat
 ```
 
 It contains:
@@ -80,6 +80,18 @@ alpha_high     = g5(phi, h, sigma, alpha_infinity, lambda, lambda_prime, k0_prim
 
 ## Current Scripts
 
+All active entry points read the default dataset run from:
+
+```text
+surrogate_model/segmented_symbolic_regression/dataset_run_config.json
+```
+
+The current default is `run2`. Change that one value to switch all MATLAB and
+Python segmented-SR entry points together. Python training and evaluation also
+accept `--dataset-run runN`. Standard `datasets/run*/...` paths are checked
+against the selected run, and evaluation rejects training artifacts whose
+`training_metadata.json` records a different dataset run.
+
 Generate the full symbolic dataset:
 
 ```text
@@ -103,6 +115,10 @@ Evaluate candidate formulas and generate plots:
 ```text
 surrogate_model/segmented_symbolic_regression/evaluate_segmented_symbolic_candidates.py
 ```
+
+Evaluation applies `clip(alpha_raw, 0, 1)` to every candidate prediction before
+candidate selection, metrics, plots, and boundary diagnostics. The summary
+retains both raw and clipped prediction diagnostics for traceability.
 
 Early smoke-test drivers and environment checks have been archived here:
 
@@ -355,6 +371,7 @@ Run from the project root:
 ```powershell
 & 'surrogate_model\segmented_symbolic_regression\.venv_py311\Scripts\python.exe' `
   'surrogate_model\segmented_symbolic_regression\train_segmented_symbolic_models.py' `
+  --dataset-run run2 `
   --niterations 40 `
   --populations 8 `
   --population-size 80 `
@@ -395,6 +412,7 @@ Evaluate a specific training run:
 ```powershell
 & 'surrogate_model\segmented_symbolic_regression\.venv_py311\Scripts\python.exe' `
   'surrogate_model\segmented_symbolic_regression\evaluate_segmented_symbolic_candidates.py' `
+  --dataset-run run2 `
   --training-dir 'surrogate_model\segmented_symbolic_regression\artifacts\wool_segmented_symbolic_pysr_runs\<training_run_directory>'
 ```
 
@@ -435,6 +453,7 @@ The evaluation script exports:
 candidate_metrics.csv
 selected_candidates.csv
 selected_combination_summary.json
+boundary_transition_metrics.csv
 figures/<segment>_complexity_vs_rmse.png
 figures/selected_predicted_vs_true.png
 figures/selected_error_vs_frequency.png

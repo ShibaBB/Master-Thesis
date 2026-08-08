@@ -9,7 +9,9 @@ script_dir = fileparts(mfilename('fullpath'));
 surrogate_root = fileparts(script_dir);
 
 symbolic_dataset_config = struct();
-symbolic_dataset_config.teacher_dataset_file = fullfile(surrogate_root, 'datasets', 'run1', 'MLP', 'Wool_surrogate_dataset.mat');
-symbolic_dataset_config.output_file = fullfile(surrogate_root, 'datasets', 'run1', 'segmented_SR', 'Wool_symbolic_segmented.mat');
+run_config = segmented_dataset_run_config();
+symbolic_dataset_config.dataset_run = run_config.dataset_run;
+symbolic_dataset_config.teacher_dataset_file = run_config.teacher_dataset_file;
+symbolic_dataset_config.output_file = run_config.segmented_dataset_file;
 
 run(fullfile(script_dir, 'generate_segmented_symbolic_dataset.m'));

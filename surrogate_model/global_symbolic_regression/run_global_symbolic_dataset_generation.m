@@ -7,10 +7,12 @@ clc;
 
 script_dir = fileparts(mfilename('fullpath'));
 surrogate_root = fileparts(script_dir);
+run_config = global_dataset_run_config();
 
 symbolic_dataset_config = struct();
-symbolic_dataset_config.teacher_dataset_file = fullfile(surrogate_root, 'datasets', 'run1', 'MLP', 'Wool_surrogate_dataset.mat');
-symbolic_dataset_config.output_file = fullfile(surrogate_root, 'datasets', 'run1', 'global_SR', 'Wool_symbolic_global.mat');
+symbolic_dataset_config.dataset_run = run_config.dataset_run;
+symbolic_dataset_config.teacher_dataset_file = run_config.teacher_dataset_file;
+symbolic_dataset_config.output_file = run_config.global_dataset_file;
 symbolic_dataset_config.segment_bounds_hz = [100, 2000];
 symbolic_dataset_config.segment_names = {'global_100_2000'};
 

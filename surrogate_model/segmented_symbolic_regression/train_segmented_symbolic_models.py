@@ -12,6 +12,7 @@ import keyword
 import math
 import os
 import pickle
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -20,13 +21,31 @@ import h5py
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import train_test_split
+from segmented_run_paths import default_dataset_run, resolve_dataset_file
+
+
+SURROGATE_ROOT = Path(__file__).resolve().parents[1]
+if str(SURROGATE_ROOT) not in sys.path:
+    sys.path.insert(0, str(SURROGATE_ROOT))
+
+from shared_split_utils import (  # noqa: E402
+    resolve_and_load_shared_split,
+    source_curve_mask,
+)
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_DATASET = SCRIPT_DIR.parent / "datasets" / "run1" / "segmented_SR" / "Wool_symbolic_segmented.mat"
 DEFAULT_OUTPUT_ROOT = SCRIPT_DIR / "artifacts" / "wool_segmented_symbolic_pysr_runs"
-DEFAULT_JULIA_EXE = (
+VENV_JULIA_EXE = (
+    SCRIPT_DIR
+    / ".venv_py311"
+    / "julia_env"
+    / "pyjuliapkg"
+    / "install"
+    / "bin"
+    / "julia.exe"
+)
+USER_JULIA_EXE = (
     Path.home()
     / ".julia"
     / "juliaup"
@@ -34,6 +53,7 @@ DEFAULT_JULIA_EXE = (
     / "bin"
     / "julia.exe"
 )
+DEFAULT_JULIA_EXE = VENV_JULIA_EXE if VENV_JULIA_EXE.exists() else USER_JULIA_EXE
 RESERVED_VARIABLE_NAMES = {
     "lambda",
     "Lambda",
@@ -49,7 +69,23 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Train one PySR symbolic-regression model per frequency segment."
     )
-    parser.add_argument("--dataset-file", type=Path, default=DEFAULT_DATASET)
+    parser.add_argument(
+        "--dataset-run",
+        default=default_dataset_run(),
+        help="Dataset run under surrogate_model/datasets (default comes from dataset_run_config.json).",
+    )
+    parser.add_argument(
+        "--dataset-file",
+        type=Path,
+        default=None,
+        help="Optional explicit dataset path. Standard datasets/run*/ paths must match --dataset-run.",
+    )
+    parser.add_argument(
+        "--split-file",
+        type=Path,
+        default=None,
+        help="Shared source-curve split JSON. Defaults to datasets/<run>/shared_curve_split.json.",
+    )
     parser.add_argument(
         "--output-root",
         type=Path,
@@ -68,7 +104,6 @@ def parse_args() -> argparse.Namespace:
         help="Optional readable suffix for the automatically created run directory.",
     )
     parser.add_argument("--random-seed", type=int, default=42)
-    parser.add_argument("--test-size", type=float, default=0.2)
     parser.add_argument(
         "--max-samples-per-segment",
         type=int,
@@ -80,7 +115,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--population-size", type=int, default=80)
     parser.add_argument("--maxsize", type=int, default=24)
     parser.add_argument("--model-selection", choices=["best", "accuracy", "score"], default="best")
-    parser.add_argument("--procs", type=int, default=0, help="PySR worker processes. 0 lets PySR choose.")
+    parser.add_argument(
+        "--procs",
+        type=int,
+        default=0,
+        help="Deprecated compatibility option. Segmented training is serial, so this value is ignored.",
+    )
     parser.add_argument("--julia-exe", type=Path, default=DEFAULT_JULIA_EXE)
     parser.add_argument(
         "--overwrite",
@@ -108,16 +148,39 @@ def resolve_output_dir(args: argparse.Namespace) -> Path:
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     sample_tag = (
-        "allrows"
+        "all"
         if args.max_samples_per_segment is None
         else f"cap{args.max_samples_per_segment}"
     )
     config_tag = (
-        f"iter{args.niterations}_pop{args.populations}_"
-        f"ps{args.population_size}_size{args.maxsize}_{sample_tag}"
+        f"{sanitize_name(args.dataset_run)}_i{args.niterations}_p{args.populations}_"
+        f"ps{args.population_size}_s{args.maxsize}_{sample_tag}"
     )
-    run_suffix = f"_{sanitize_name(args.run_name)}" if args.run_name.strip() else ""
+    run_label = sanitize_name(args.run_name)[:24]
+    run_suffix = f"_{run_label}" if run_label else ""
     return unique_path(args.output_root / f"{timestamp}_{config_tag}{run_suffix}")
+
+
+def validate_output_path_length(output_dir: Path, segment_names: list[str]) -> None:
+    if os.name != "nt":
+        return
+    longest_path = max(
+        (
+            output_dir
+            / "pysr_runs"
+            / sanitize_name(segment_name)
+            / sanitize_name(segment_name)
+            / "hall_of_fame.csv"
+            for segment_name in segment_names
+        ),
+        key=lambda path: len(str(path.resolve())),
+    )
+    if len(str(longest_path.resolve())) > 240:
+        raise ValueError(
+            "The PySR output path is too long for reliable Windows writes "
+            f"({len(str(longest_path.resolve()))} characters): {longest_path}. "
+            "Use --output-dir with a shorter path."
+        )
 
 
 def decode_matlab_string(file: h5py.File, value: Any) -> str:
@@ -157,6 +220,7 @@ def read_symbolic_dataset(dataset_file: Path) -> dict[str, Any]:
         x_symbolic = read_numeric_dataset(file["X_symbolic"])
         y_symbolic = np.array(file["y_symbolic"]).reshape(-1)
         segment_index = np.array(file["segment_index"]).reshape(-1).astype(int)
+        source_curve_index = np.array(file["source_curve_index"]).reshape(-1).astype(int)
 
         info_group = file["symbolic_dataset_info"]
         feature_names = decode_matlab_string_array(file, info_group["feature_names"])
@@ -171,11 +235,14 @@ def read_symbolic_dataset(dataset_file: Path) -> dict[str, Any]:
         raise ValueError("X_symbolic row count does not match y_symbolic length.")
     if x_symbolic.shape[0] != segment_index.shape[0]:
         raise ValueError("X_symbolic row count does not match segment_index length.")
+    if x_symbolic.shape[0] != source_curve_index.shape[0]:
+        raise ValueError("X_symbolic row count does not match source_curve_index length.")
 
     return {
         "X": x_symbolic,
         "y": y_symbolic,
         "segment_index": segment_index,
+        "source_curve_index": source_curve_index,
         "feature_names": feature_names,
         "segment_bounds": segment_bounds,
         "segment_names": segment_names,
@@ -227,15 +294,14 @@ def build_model(args: argparse.Namespace, pysr_output_dir: Path, run_id: str) ->
         "maxsize": args.maxsize,
         "model_selection": args.model_selection,
         "random_state": args.random_seed,
+        "deterministic": True,
         "parallelism": "serial",
         "progress": False,
         "verbosity": 1,
         "temp_equation_file": False,
-        "output_directory": str(pysr_output_dir),
+        "output_directory": pysr_output_dir.as_posix(),
         "run_id": run_id,
     }
-    if args.procs > 0:
-        model_kwargs["procs"] = args.procs
     return PySRRegressor(**model_kwargs)
 
 
@@ -260,22 +326,36 @@ def train_one_segment(
 ) -> dict[str, Any]:
     segment_name = data["segment_names"][segment_id - 1]
     bounds = data["segment_bounds"][segment_id - 1]
-    mask = data["segment_index"] == segment_id
-    indices = np.flatnonzero(mask)
+    segment_mask = data["segment_index"] == segment_id
+    train_indices = np.flatnonzero(
+        segment_mask & source_curve_mask(data["source_curve_index"], data["shared_split"], "train")
+    )
+    validation_indices = np.flatnonzero(
+        segment_mask
+        & source_curve_mask(data["source_curve_index"], data["shared_split"], "validation")
+    )
+    test_indices = np.flatnonzero(
+        segment_mask & source_curve_mask(data["source_curve_index"], data["shared_split"], "test")
+    )
 
     rng = np.random.default_rng(args.random_seed + segment_id)
-    if args.max_samples_per_segment is not None and indices.size > args.max_samples_per_segment:
-        indices = rng.choice(indices, size=args.max_samples_per_segment, replace=False)
+    if (
+        args.max_samples_per_segment is not None
+        and train_indices.size > args.max_samples_per_segment
+    ):
+        train_indices = rng.choice(
+            train_indices, size=args.max_samples_per_segment, replace=False
+        )
 
-    X = data["X"][indices, :]
-    y = data["y"][indices]
+    if min(train_indices.size, validation_indices.size, test_indices.size) == 0:
+        raise ValueError(f"Segment {segment_name} has an empty shared split partition.")
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=args.test_size,
-        random_state=args.random_seed + segment_id,
-    )
+    X_train = data["X"][train_indices, :]
+    y_train = data["y"][train_indices]
+    X_validation = data["X"][validation_indices, :]
+    y_validation = data["y"][validation_indices]
+    X_test = data["X"][test_indices, :]
+    y_test = data["y"][test_indices]
 
     segment_slug = sanitize_name(segment_name)
     equations_dir = output_dir / "equations"
@@ -287,12 +367,15 @@ def train_one_segment(
 
     print(
         f"\nTraining segment {segment_id}: {segment_name} "
-        f"({bounds[0]:.2f}-{bounds[1]:.2f} Hz), rows={len(indices)}"
+        f"({bounds[0]:.2f}-{bounds[1]:.2f} Hz), "
+        f"train/validation/test rows="
+        f"{len(train_indices)}/{len(validation_indices)}/{len(test_indices)}"
     )
     model = build_model(args, pysr_runs_dir, segment_slug)
     model.fit(X_train, y_train, variable_names=data["pysr_variable_names"])
 
     train_pred = model.predict(X_train)
+    validation_pred = model.predict(X_validation)
     test_pred = model.predict(X_test)
     selected = model.get_best()
 
@@ -309,14 +392,20 @@ def train_one_segment(
         "segment_name": segment_name,
         "lower_hz": float(bounds[0]),
         "upper_hz": float(bounds[1]),
+        "shared_split_file": data["shared_split"]["split_file"],
+        "shared_split_hash": data["shared_split"]["split_hash"],
         "equation": str(selected["equation"]),
         "complexity": int(selected["complexity"]),
         "loss": float(selected["loss"]),
         "score": float(selected["score"]) if "score" in selected and pd.notna(selected["score"]) else None,
-        "n_rows_used": int(len(indices)),
+        "n_rows_used": int(
+            len(train_indices) + len(validation_indices) + len(test_indices)
+        ),
         "n_train": int(len(y_train)),
+        "n_validation": int(len(y_validation)),
         "n_test": int(len(y_test)),
         "train_metrics": regression_metrics(y_train, train_pred),
+        "validation_metrics": regression_metrics(y_validation, validation_pred),
         "test_metrics": regression_metrics(y_test, test_pred),
         "equations_csv": str(equations_csv),
         "model_file": str(model_path),
@@ -330,17 +419,28 @@ def train_one_segment(
 
 def main() -> None:
     args = parse_args()
+    args.dataset_file, resolved_dataset_run = resolve_dataset_file(
+        args.dataset_run, args.dataset_file
+    )
+    args.dataset_run = resolved_dataset_run
 
     if args.julia_exe.exists():
         os.environ.setdefault("PYTHON_JULIAPKG_EXE", str(args.julia_exe))
 
     args.output_dir = resolve_output_dir(args)
-    args.output_dir.mkdir(parents=True, exist_ok=True)
     data = read_symbolic_dataset(args.dataset_file)
+    data["shared_split"] = resolve_and_load_shared_split(
+        resolved_dataset_run, args.split_file, data["num_curve_samples"]
+    )
+    validate_output_path_length(args.output_dir, data["segment_names"])
+    args.output_dir.mkdir(parents=True, exist_ok=True)
     data["pysr_variable_names"] = make_pysr_variable_names(data["feature_names"])
 
     metadata = {
         "dataset_file": str(args.dataset_file),
+        "dataset_run": resolved_dataset_run,
+        "shared_split_file": data["shared_split"]["split_file"],
+        "shared_split_hash": data["shared_split"]["split_hash"],
         "fiberfolder": data["fiberfolder"],
         "num_curve_samples": data["num_curve_samples"],
         "num_symbolic_samples": data["num_symbolic_samples"],
@@ -372,8 +472,10 @@ def main() -> None:
                 "complexity": item["complexity"],
                 "loss": item["loss"],
                 "train_rmse": item["train_metrics"]["rmse"],
+                "validation_rmse": item["validation_metrics"]["rmse"],
                 "test_rmse": item["test_metrics"]["rmse"],
                 "train_mae": item["train_metrics"]["mae"],
+                "validation_mae": item["validation_metrics"]["mae"],
                 "test_mae": item["test_metrics"]["mae"],
                 "test_r2": item["test_metrics"]["r2"],
                 "n_rows_used": item["n_rows_used"],

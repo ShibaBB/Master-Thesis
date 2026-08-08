@@ -1,0 +1,182 @@
+[
+  {
+    "segment_id": 1,
+    "segment_name": "low_100_700",
+    "lower_hz": 100.0,
+    "upper_hz": 700.0,
+    "shared_split_file": "C:\\MasterThesis_Project_alpha\\surrogate_model\\datasets\\run2\\shared_curve_split.json",
+    "shared_split_hash": "512522db31338b940ba555d36ea567646fb112dbcd802c460e134dd6ff58d437",
+    "equation": "((2647.5178 / sqrt(sigma)) / -142.56775) + (0.16616368 / ((147.17175 / f) + ((1710.1018 / sigma) + sqrt(k0_prime * sigma))))",
+    "complexity": 21,
+    "loss": 0.00044235153,
+    "score": 0.14176550095846555,
+    "n_rows_used": 20000,
+    "n_train": 14000,
+    "n_validation": 3000,
+    "n_test": 3000,
+    "train_metrics": {
+      "rmse": 0.021032155197536283,
+      "mae": 0.01579702658663885,
+      "max_abs_error": 0.17800215729784585,
+      "r2": 0.9821940849542242
+    },
+    "validation_metrics": {
+      "rmse": 0.020582857937404636,
+      "mae": 0.015385119401087437,
+      "max_abs_error": 0.15088674572667193,
+      "r2": 0.9830894947300406
+    },
+    "test_metrics": {
+      "rmse": 0.019449026803168002,
+      "mae": 0.015189478519517706,
+      "max_abs_error": 0.11982669566765408,
+      "r2": 0.9848279277185388
+    },
+    "equations_csv": "C:\\MasterThesis_Project_alpha\\surrogate_model\\segmented_symbolic_regression\\artifacts\\archived_pre_segmented_rename_artifacts\\wool_segmented_symbolic_pysr_runs\\20260808_113903_run2_rootrename\\equations\\low_100_700_equations.csv",
+    "model_file": "C:\\MasterThesis_Project_alpha\\surrogate_model\\segmented_symbolic_regression\\artifacts\\archived_pre_segmented_rename_artifacts\\wool_segmented_symbolic_pysr_runs\\20260808_113903_run2_rootrename\\models\\low_100_700_pysr_model.pkl"
+  },
+  {
+    "segment_id": 2,
+    "segment_name": "midlow_700_1000",
+    "lower_hz": 700.0,
+    "upper_hz": 1000.0,
+    "shared_split_file": "C:\\MasterThesis_Project_alpha\\surrogate_model\\datasets\\run2\\shared_curve_split.json",
+    "shared_split_hash": "512522db31338b940ba555d36ea567646fb112dbcd802c460e134dd6ff58d437",
+    "equation": "(((f + sqrt(sqrt(alpha_infinity / k0_prime))) + (alpha_infinity / sqrt(lambda_var))) * 0.00055489433) + (-1269.215 / sigma)",
+    "complexity": 18,
+    "loss": 0.0011263741,
+    "score": 0.21236904379593496,
+    "n_rows_used": 10000,
+    "n_train": 7000,
+    "n_validation": 1500,
+    "n_test": 1500,
+    "train_metrics": {
+      "rmse": 0.03356149975277967,
+      "mae": 0.02645464233860415,
+      "max_abs_error": 0.16698878410552287,
+      "r2": 0.7385358131260306
+    },
+    "validation_metrics": {
+      "rmse": 0.03535902199293736,
+      "mae": 0.02715524261370652,
+      "max_abs_error": 0.14569756979330206,
+      "r2": 0.6838210269463001
+    },
+    "test_metrics": {
+      "rmse": 0.030287161451304816,
+      "mae": 0.02342637536446596,
+      "max_abs_error": 0.13331126696843354,
+      "r2": 0.7577969945544112
+    },
+    "equations_csv": "C:\\MasterThesis_Project_alpha\\surrogate_model\\segmented_symbolic_regression\\artifacts\\archived_pre_segmented_rename_artifacts\\wool_segmented_symbolic_pysr_runs\\20260808_113903_run2_rootrename\\equations\\midlow_700_1000_equations.csv",
+    "model_file": "C:\\MasterThesis_Project_alpha\\surrogate_model\\segmented_symbolic_regression\\artifacts\\archived_pre_segmented_rename_artifacts\\wool_segmented_symbolic_pysr_runs\\20260808_113903_run2_rootrename\\models\\midlow_700_1000_pysr_model.pkl"
+  },
+  {
+    "segment_id": 3,
+    "segment_name": "midhigh_1000_1300",
+    "lower_hz": 1000.0,
+    "upper_hz": 1300.0,
+    "shared_split_file": "C:\\MasterThesis_Project_alpha\\surrogate_model\\datasets\\run2\\shared_curve_split.json",
+    "shared_split_hash": "512522db31338b940ba555d36ea567646fb112dbcd802c460e134dd6ff58d437",
+    "equation": "(((alpha_infinity * 0.0044789873) / sqrt(lambda_var * sigma)) - -0.01826764) * sqrt(f)",
+    "complexity": 13,
+    "loss": 0.00167079,
+    "score": 0.18213559952049416,
+    "n_rows_used": 10000,
+    "n_train": 7000,
+    "n_validation": 1500,
+    "n_test": 1500,
+    "train_metrics": {
+      "rmse": 0.04087530108344355,
+      "mae": 0.03204049817881901,
+      "max_abs_error": 0.19688562312445324,
+      "r2": 0.6399783887084665
+    },
+    "validation_metrics": {
+      "rmse": 0.03763673939120614,
+      "mae": 0.029435890670317343,
+      "max_abs_error": 0.1609848243597558,
+      "r2": 0.6637603596768246
+    },
+    "test_metrics": {
+      "rmse": 0.036732240727123264,
+      "mae": 0.028007866039472924,
+      "max_abs_error": 0.1611703880583244,
+      "r2": 0.6601121347956802
+    },
+    "equations_csv": "C:\\MasterThesis_Project_alpha\\surrogate_model\\segmented_symbolic_regression\\artifacts\\archived_pre_segmented_rename_artifacts\\wool_segmented_symbolic_pysr_runs\\20260808_113903_run2_rootrename\\equations\\midhigh_1000_1300_equations.csv",
+    "model_file": "C:\\MasterThesis_Project_alpha\\surrogate_model\\segmented_symbolic_regression\\artifacts\\archived_pre_segmented_rename_artifacts\\wool_segmented_symbolic_pysr_runs\\20260808_113903_run2_rootrename\\models\\midhigh_1000_1300_pysr_model.pkl"
+  },
+  {
+    "segment_id": 4,
+    "segment_name": "highlow_1300_1650",
+    "lower_hz": 1300.0,
+    "upper_hz": 1650.0,
+    "shared_split_file": "C:\\MasterThesis_Project_alpha\\surrogate_model\\datasets\\run2\\shared_curve_split.json",
+    "shared_split_hash": "512522db31338b940ba555d36ea567646fb112dbcd802c460e134dd6ff58d437",
+    "equation": "(alpha_infinity * (0.16594785 - (sigma * 1.9214228e-6))) + ((sqrt(f) + alpha_infinity) * 0.018046683)",
+    "complexity": 14,
+    "loss": 0.00074700924,
+    "score": 0.30205054029914674,
+    "n_rows_used": 12000,
+    "n_train": 8400,
+    "n_validation": 1800,
+    "n_test": 1800,
+    "train_metrics": {
+      "rmse": 0.027331471703939573,
+      "mae": 0.0196617090150118,
+      "max_abs_error": 0.1813669432049101,
+      "r2": 0.8853339646032922
+    },
+    "validation_metrics": {
+      "rmse": 0.024980828511985177,
+      "mae": 0.01801974960815057,
+      "max_abs_error": 0.13050463185519623,
+      "r2": 0.8943668220061839
+    },
+    "test_metrics": {
+      "rmse": 0.027023122126881495,
+      "mae": 0.01922959360038584,
+      "max_abs_error": 0.14050845309193294,
+      "r2": 0.8756553855673275
+    },
+    "equations_csv": "C:\\MasterThesis_Project_alpha\\surrogate_model\\segmented_symbolic_regression\\artifacts\\archived_pre_segmented_rename_artifacts\\wool_segmented_symbolic_pysr_runs\\20260808_113903_run2_rootrename\\equations\\highlow_1300_1650_equations.csv",
+    "model_file": "C:\\MasterThesis_Project_alpha\\surrogate_model\\segmented_symbolic_regression\\artifacts\\archived_pre_segmented_rename_artifacts\\wool_segmented_symbolic_pysr_runs\\20260808_113903_run2_rootrename\\models\\highlow_1300_1650_pysr_model.pkl"
+  },
+  {
+    "segment_id": 5,
+    "segment_name": "high_1650_2000",
+    "lower_hz": 1650.0,
+    "upper_hz": 2000.0,
+    "shared_split_file": "C:\\MasterThesis_Project_alpha\\surrogate_model\\datasets\\run2\\shared_curve_split.json",
+    "shared_split_hash": "512522db31338b940ba555d36ea567646fb112dbcd802c460e134dd6ff58d437",
+    "equation": "(sigma * -3.4203e-6) + (0.98877406 - (alpha_infinity * -0.035471477))",
+    "complexity": 9,
+    "loss": 0.0005267583,
+    "score": 0.1855075348918101,
+    "n_rows_used": 12000,
+    "n_train": 8400,
+    "n_validation": 1800,
+    "n_test": 1800,
+    "train_metrics": {
+      "rmse": 0.022951218542537757,
+      "mae": 0.015860202005191063,
+      "max_abs_error": 0.17605515991827647,
+      "r2": 0.9240732689504012
+    },
+    "validation_metrics": {
+      "rmse": 0.022090312813017095,
+      "mae": 0.014839492419202275,
+      "max_abs_error": 0.16472459521693217,
+      "r2": 0.9220625291241739
+    },
+    "test_metrics": {
+      "rmse": 0.0212191633098848,
+      "mae": 0.015567418493443732,
+      "max_abs_error": 0.14818565590589694,
+      "r2": 0.9312399407738864
+    },
+    "equations_csv": "C:\\MasterThesis_Project_alpha\\surrogate_model\\segmented_symbolic_regression\\artifacts\\archived_pre_segmented_rename_artifacts\\wool_segmented_symbolic_pysr_runs\\20260808_113903_run2_rootrename\\equations\\high_1650_2000_equations.csv",
+    "model_file": "C:\\MasterThesis_Project_alpha\\surrogate_model\\segmented_symbolic_regression\\artifacts\\archived_pre_segmented_rename_artifacts\\wool_segmented_symbolic_pysr_runs\\20260808_113903_run2_rootrename\\models\\high_1650_2000_pysr_model.pkl"
+  }
+]

@@ -1,0 +1,68 @@
+{
+  "dataset_file": "C:\\MasterThesis_Project_alpha\\surrogate_model\\datasets\\run2\\global_SR\\Wool_symbolic_global.mat",
+  "dataset_run": "run2",
+  "shared_split_file": "C:\\MasterThesis_Project_alpha\\surrogate_model\\datasets\\run2\\shared_curve_split.json",
+  "shared_split_hash": "512522db31338b940ba555d36ea567646fb112dbcd802c460e134dd6ff58d437",
+  "training_dir": "C:\\MasterThesis_Project_alpha\\surrogate_model\\global_symbolic_regression\\artifacts\\wool_global_symbolic_pysr_runs\\20260808_121026_run2",
+  "candidate_selection_split": "validation",
+  "final_evaluation_split": "test",
+  "selection_rule": "max_complexity",
+  "output_postprocessing": {
+    "method": "clip",
+    "lower_bound": 0.0,
+    "upper_bound": 1.0,
+    "num_values_clipped": 261
+  },
+  "selected_candidate": 15,
+  "global_name": "global_100_2000",
+  "global_bounds_hz": [
+    100.0,
+    2000.0
+  ],
+  "feature_names": [
+    "phi",
+    "h",
+    "sigma",
+    "alpha_infinity",
+    "lambda",
+    "lambda_prime",
+    "k0_prime",
+    "f"
+  ],
+  "pysr_variable_names": [
+    "phi",
+    "h",
+    "sigma",
+    "alpha_infinity",
+    "lambda_var",
+    "lambda_prime",
+    "k0_prime",
+    "f"
+  ],
+  "overall_metrics": {
+    "rmse": 0.04422061868481126,
+    "mae": 0.034261754076851884,
+    "max_abs_error": 0.2006859400029397,
+    "r2": 0.9694026821274639
+  },
+  "validation_selection_metrics": {
+    "rmse": 0.04537467797962217,
+    "mae": 0.03451513949332436,
+    "max_abs_error": 0.19292387524972998,
+    "r2": 0.9677967759811983
+  },
+  "raw_prediction_diagnostics": {
+    "prediction_min": -0.2734439033788427,
+    "prediction_max": 1.0288114604041838,
+    "count_below_zero": 226,
+    "count_above_one": 35,
+    "fraction_outside_0_1": 0.0271875
+  },
+  "prediction_diagnostics": {
+    "prediction_min": 0.0,
+    "prediction_max": 1.0,
+    "count_below_zero": 0,
+    "count_above_one": 0,
+    "fraction_outside_0_1": 0.0
+  }
+}

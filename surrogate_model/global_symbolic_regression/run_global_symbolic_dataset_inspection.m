@@ -7,9 +7,11 @@ clc;
 
 script_dir = fileparts(mfilename('fullpath'));
 surrogate_root = fileparts(script_dir);
+run_config = global_dataset_run_config();
 
 symbolic_inspection_config = struct();
-symbolic_inspection_config.dataset_file = fullfile(surrogate_root, 'datasets', 'run1', 'global_SR', 'Wool_symbolic_global.mat');
+symbolic_inspection_config.dataset_run = run_config.dataset_run;
+symbolic_inspection_config.dataset_file = run_config.global_dataset_file;
 symbolic_inspection_config.inspection_name = 'wool_symbolic_global_dataset_inspection';
 symbolic_inspection_config.artifacts_dir = fullfile(script_dir, 'artifacts', symbolic_inspection_config.inspection_name);
 symbolic_inspection_config.figures_dir = fullfile(symbolic_inspection_config.artifacts_dir, 'figures');

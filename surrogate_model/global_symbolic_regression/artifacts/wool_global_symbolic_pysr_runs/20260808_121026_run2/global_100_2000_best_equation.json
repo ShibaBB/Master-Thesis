@@ -1,0 +1,35 @@
+{
+  "global_name": "global_100_2000",
+  "lower_hz": 100.0,
+  "upper_hz": 2000.0,
+  "shared_split_file": "C:\\MasterThesis_Project_alpha\\surrogate_model\\datasets\\run2\\shared_curve_split.json",
+  "shared_split_hash": "512522db31338b940ba555d36ea567646fb112dbcd802c460e134dd6ff58d437",
+  "equation": "(((0.46781078 - (sigma * 2.4152473e-6)) * log(f)) + -2.4951143) - (sigma * -1.541887e-5)",
+  "complexity": 14,
+  "loss": 0.0030494104,
+  "score": 0.3785475033481229,
+  "n_rows_used": 64000,
+  "n_train": 44800,
+  "n_validation": 9600,
+  "n_test": 9600,
+  "train_metrics": {
+    "rmse": 0.05522147011872855,
+    "mae": 0.04018264036528543,
+    "max_abs_error": 0.3008897934065329,
+    "r2": 0.9538544086023307
+  },
+  "validation_metrics": {
+    "rmse": 0.05259788090133064,
+    "mae": 0.03809458879170722,
+    "max_abs_error": 0.2956993879307215,
+    "r2": 0.9567278238755511
+  },
+  "test_metrics": {
+    "rmse": 0.05179952459671078,
+    "mae": 0.03796310003646278,
+    "max_abs_error": 0.2923421780888795,
+    "r2": 0.9580158584763576
+  },
+  "equations_csv": "C:\\MasterThesis_Project_alpha\\surrogate_model\\global_symbolic_regression\\artifacts\\wool_global_symbolic_pysr_runs\\20260808_121026_run2\\equations\\global_100_2000_equations.csv",
+  "model_file": "C:\\MasterThesis_Project_alpha\\surrogate_model\\global_symbolic_regression\\artifacts\\wool_global_symbolic_pysr_runs\\20260808_121026_run2\\models\\global_100_2000_pysr_model.pkl"
+}

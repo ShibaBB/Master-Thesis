@@ -9,10 +9,11 @@ script_dir = fileparts(mfilename('fullpath'));
 surrogate_root = fileparts(script_dir);
 
 %% Configuration
-teacher_dataset_file = fullfile(surrogate_root, 'datasets', 'run1', 'MLP', 'Wool_surrogate_dataset.mat');
-
-output_dir = fullfile(surrogate_root, 'datasets', 'run1', 'segmented_SR');
-output_file = fullfile(output_dir, 'Wool_symbolic_segmented.mat');
+run_config = segmented_dataset_run_config();
+dataset_run = run_config.dataset_run;
+teacher_dataset_file = run_config.teacher_dataset_file;
+output_file = run_config.segmented_dataset_file;
+output_dir = fileparts(output_file);
 
 segment_bounds_hz = [
     100, 700;
@@ -31,6 +32,13 @@ segment_names = {
 };
 
 if exist('symbolic_dataset_config', 'var')
+    if isfield(symbolic_dataset_config, 'dataset_run')
+        run_config = segmented_dataset_run_config(symbolic_dataset_config.dataset_run);
+        dataset_run = run_config.dataset_run;
+        teacher_dataset_file = run_config.teacher_dataset_file;
+        output_file = run_config.segmented_dataset_file;
+        output_dir = fileparts(output_file);
+    end
     if isfield(symbolic_dataset_config, 'teacher_dataset_file'), teacher_dataset_file = symbolic_dataset_config.teacher_dataset_file; end
     if isfield(symbolic_dataset_config, 'output_dir'), output_dir = symbolic_dataset_config.output_dir; end
     if isfield(symbolic_dataset_config, 'output_file'), output_file = symbolic_dataset_config.output_file; end
@@ -39,6 +47,8 @@ if exist('symbolic_dataset_config', 'var')
 end
 
 %% Validate configuration
+assert_segmented_dataset_run_paths(dataset_run, teacher_dataset_file, output_file);
+
 if ~exist(teacher_dataset_file, 'file')
     error('Teacher dataset file not found: %s', teacher_dataset_file);
 end
@@ -108,6 +118,7 @@ if ~exist(output_dir, 'dir')
 end
 
 symbolic_dataset_info = struct();
+symbolic_dataset_info.dataset_run = dataset_run;
 symbolic_dataset_info.source_teacher_dataset_file = teacher_dataset_file;
 symbolic_dataset_info.fiberfolder = dataset_info.fiberfolder;
 symbolic_dataset_info.selected_porosityfolders = dataset_info.selected_porosityfolders;

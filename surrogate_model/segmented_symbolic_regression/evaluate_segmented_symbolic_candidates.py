@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -25,18 +26,52 @@ import pandas as pd
 import sympy as sp
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
+from segmented_run_paths import (
+    default_dataset_run,
+    resolve_dataset_file,
+    training_dataset_run,
+)
+
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_DATASET = SCRIPT_DIR.parent / "datasets" / "run1" / "segmented_SR" / "Wool_symbolic_segmented.mat"
+SURROGATE_ROOT = SCRIPT_DIR.parent
+if str(SURROGATE_ROOT) not in sys.path:
+    sys.path.insert(0, str(SURROGATE_ROOT))
+
+from shared_split_utils import (  # noqa: E402
+    resolve_and_load_shared_split,
+    source_curve_mask,
+    subset_symbolic_data,
+    validate_training_split,
+)
+
 DEFAULT_TRAINING_ROOT = SCRIPT_DIR / "artifacts" / "wool_segmented_symbolic_pysr_runs"
 DEFAULT_OUTPUT_ROOT = SCRIPT_DIR / "artifacts" / "wool_segmented_symbolic_candidate_evaluation_runs"
+OUTPUT_LOWER_BOUND = 0.0
+OUTPUT_UPPER_BOUND = 1.0
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Evaluate PySR candidate equations and generate diagnostic plots."
     )
-    parser.add_argument("--dataset-file", type=Path, default=DEFAULT_DATASET)
+    parser.add_argument(
+        "--dataset-run",
+        default=default_dataset_run(),
+        help="Dataset run under surrogate_model/datasets (default comes from dataset_run_config.json).",
+    )
+    parser.add_argument(
+        "--dataset-file",
+        type=Path,
+        default=None,
+        help="Optional explicit dataset path. Standard datasets/run*/ paths must match --dataset-run.",
+    )
+    parser.add_argument(
+        "--split-file",
+        type=Path,
+        default=None,
+        help="Shared source-curve split JSON. Defaults to datasets/<run>/shared_curve_split.json.",
+    )
     parser.add_argument(
         "--training-root",
         type=Path,
@@ -100,8 +135,14 @@ def unique_path(base_path: Path) -> Path:
     raise RuntimeError(f"Could not create a unique output path for base path: {base_path}")
 
 
-def resolve_training_dir(args: argparse.Namespace) -> Path:
+def resolve_training_dir(args: argparse.Namespace, dataset_run: str) -> Path:
     if args.training_dir is not None:
+        candidate_run = training_dataset_run(args.training_dir)
+        if dataset_run != "custom" and candidate_run != dataset_run:
+            raise ValueError(
+                f"Training/evaluation run mismatch: dataset uses {dataset_run!r}, but "
+                f"training metadata reports {candidate_run!r}: {args.training_dir}"
+            )
         return args.training_dir
 
     if not args.training_root.exists():
@@ -113,12 +154,14 @@ def resolve_training_dir(args: argparse.Namespace) -> Path:
     candidates = [
         path
         for path in args.training_root.iterdir()
-        if path.is_dir() and (path / "equations").exists()
+        if path.is_dir()
+        and (path / "equations").exists()
+        and (dataset_run == "custom" or training_dataset_run(path) == dataset_run)
     ]
     if not candidates:
         raise FileNotFoundError(
-            "No training runs with an equations directory were found under: "
-            f"{args.training_root}"
+            f"No training runs for dataset run {dataset_run!r} with an equations "
+            f"directory were found under: {args.training_root}"
         )
 
     return max(candidates, key=lambda path: path.stat().st_mtime)
@@ -131,7 +174,8 @@ def resolve_output_dir(args: argparse.Namespace) -> Path:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     training_name = sanitize_name(args.training_dir.name)
     selection_tag = sanitize_name(args.selection_rule)
-    return unique_path(args.output_root / f"{timestamp}_{training_name}_{selection_tag}")
+    run_tag = sanitize_name(args.dataset_run)
+    return unique_path(args.output_root / f"{timestamp}_{run_tag}_{training_name}_{selection_tag}")
 
 
 def decode_matlab_string(file: h5py.File, value: Any) -> str:
@@ -219,6 +263,19 @@ def regression_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[str, floa
     }
 
 
+def clip_predictions(y_pred: np.ndarray) -> np.ndarray:
+    return np.clip(y_pred, OUTPUT_LOWER_BOUND, OUTPUT_UPPER_BOUND)
+
+
+def count_values_clipped(y_pred: np.ndarray) -> int:
+    return int(
+        np.sum(
+            np.isfinite(y_pred)
+            & ((y_pred < OUTPUT_LOWER_BOUND) | (y_pred > OUTPUT_UPPER_BOUND))
+        )
+    )
+
+
 def build_predictor(expression: str, variable_names: list[str]) -> Any:
     symbols = sp.symbols(variable_names)
     local_dict = {name: symbol for name, symbol in zip(variable_names, symbols)}
@@ -264,13 +321,20 @@ def evaluate_segment_candidates(
         candidate_index = int(equation_row["candidate_index"])
         expression = str(equation_row["expression_for_eval"])
         try:
-            y_pred = predict_expression(expression, X_seg, variable_names)
+            raw_y_pred = predict_expression(expression, X_seg, variable_names)
+            y_pred = clip_predictions(raw_y_pred)
             metrics = regression_metrics(y_seg, y_pred)
             status = "ok"
             predictions[candidate_index] = y_pred
+            raw_prediction_min = float(np.min(raw_y_pred))
+            raw_prediction_max = float(np.max(raw_y_pred))
+            num_clipped = count_values_clipped(raw_y_pred)
         except Exception as exc:  # Keep evaluating other candidates.
             metrics = {"rmse": math.inf, "mae": math.inf, "max_abs_error": math.inf, "r2": -math.inf}
             status = f"failed: {exc}"
+            raw_prediction_min = math.nan
+            raw_prediction_max = math.nan
+            num_clipped = 0
 
         rows.append(
             {
@@ -283,6 +347,9 @@ def evaluate_segment_candidates(
                 "equation": str(equation_row["equation"]),
                 "expression_for_eval": expression,
                 "eval_status": status,
+                "raw_prediction_min": raw_prediction_min,
+                "raw_prediction_max": raw_prediction_max,
+                "num_clipped": num_clipped,
                 **metrics,
             }
         )
@@ -310,8 +377,8 @@ def choose_candidates(metrics: pd.DataFrame, args: argparse.Namespace) -> dict[s
             continue
 
         valid = group[group["eval_status"] == "ok"].copy()
-        if args.selection_rule == "best_score" and "pysr_score" in valid:
-            valid = valid.sort_values(["pysr_score", "rmse"], ascending=[False, True])
+        if args.selection_rule == "best_score":
+            valid = valid.sort_values(["r2", "rmse"], ascending=[False, True])
         elif args.selection_rule == "max_complexity":
             within = valid[valid["complexity"] <= args.max_complexity]
             if not within.empty:
@@ -426,7 +493,8 @@ def evaluate_selected_combination(
     metrics: pd.DataFrame,
     selected: dict[str, int],
     variable_names: list[str],
-) -> tuple[np.ndarray, pd.DataFrame]:
+) -> tuple[np.ndarray, np.ndarray, pd.DataFrame]:
+    raw_y_pred_all = np.full_like(data["y"], np.nan, dtype=float)
     y_pred_all = np.full_like(data["y"], np.nan, dtype=float)
     selected_rows: list[dict[str, Any]] = []
 
@@ -437,28 +505,109 @@ def evaluate_selected_combination(
             & (metrics["candidate_index"] == candidate_index)
         ].iloc[0]
         mask = data["segment_index"] == segment_id
-        y_pred_all[mask] = predict_expression(row["expression_for_eval"], data["X"][mask], variable_names)
+        raw_prediction = predict_expression(
+            row["expression_for_eval"], data["X"][mask], variable_names
+        )
+        raw_y_pred_all[mask] = raw_prediction
+        y_pred_all[mask] = clip_predictions(raw_prediction)
         selected_rows.append(row.to_dict())
 
     selected_df = pd.DataFrame(selected_rows)
-    return y_pred_all, selected_df
+    return raw_y_pred_all, y_pred_all, selected_df
+
+
+def prediction_diagnostics(y_pred: np.ndarray) -> dict[str, float | int]:
+    below_zero = y_pred < 0.0
+    above_one = y_pred > 1.0
+    return {
+        "prediction_min": float(np.min(y_pred)),
+        "prediction_max": float(np.max(y_pred)),
+        "count_below_zero": int(np.sum(below_zero)),
+        "count_above_one": int(np.sum(above_one)),
+        "fraction_outside_0_1": float(np.mean(below_zero | above_one)),
+    }
+
+
+def boundary_transition_diagnostics(
+    data: dict[str, Any], y_pred: np.ndarray
+) -> pd.DataFrame:
+    rows: list[dict[str, Any]] = []
+    curve_ids = np.unique(data["source_curve_index"])
+    frequency = data["X"][:, -1]
+
+    for left_segment_id in range(1, len(data["segment_names"])):
+        right_segment_id = left_segment_id + 1
+        prediction_changes: list[float] = []
+        teacher_changes: list[float] = []
+
+        for curve_id in curve_ids:
+            curve_mask = data["source_curve_index"] == curve_id
+            left_indices = np.flatnonzero(
+                curve_mask & (data["segment_index"] == left_segment_id)
+            )
+            right_indices = np.flatnonzero(
+                curve_mask & (data["segment_index"] == right_segment_id)
+            )
+            if left_indices.size == 0 or right_indices.size == 0:
+                continue
+
+            left_index = left_indices[np.argmax(frequency[left_indices])]
+            right_index = right_indices[np.argmin(frequency[right_indices])]
+            prediction_changes.append(float(y_pred[right_index] - y_pred[left_index]))
+            teacher_changes.append(float(data["y"][right_index] - data["y"][left_index]))
+
+        prediction_array = np.asarray(prediction_changes)
+        teacher_array = np.asarray(teacher_changes)
+        excess_change = prediction_array - teacher_array
+        rows.append(
+            {
+                "left_segment": data["segment_names"][left_segment_id - 1],
+                "right_segment": data["segment_names"][right_segment_id - 1],
+                "boundary_hz": float(data["segment_bounds"][left_segment_id - 1][1]),
+                "num_curves": int(prediction_array.size),
+                "mean_abs_prediction_change": float(np.mean(np.abs(prediction_array))),
+                "max_abs_prediction_change": float(np.max(np.abs(prediction_array))),
+                "mean_abs_teacher_change": float(np.mean(np.abs(teacher_array))),
+                "mean_abs_excess_change": float(np.mean(np.abs(excess_change))),
+                "max_abs_excess_change": float(np.max(np.abs(excess_change))),
+            }
+        )
+
+    return pd.DataFrame(rows)
 
 
 def main() -> None:
     args = parse_args()
-    args.training_dir = resolve_training_dir(args)
+    args.dataset_file, resolved_dataset_run = resolve_dataset_file(
+        args.dataset_run, args.dataset_file
+    )
+    args.dataset_run = resolved_dataset_run
+    args.training_dir = resolve_training_dir(args, resolved_dataset_run)
     args.output_dir = resolve_output_dir(args)
     args.output_dir.mkdir(parents=True, exist_ok=True)
     figures_dir = args.output_dir / "figures"
     figures_dir.mkdir(parents=True, exist_ok=True)
 
     data = read_symbolic_dataset(args.dataset_file)
+    num_curve_samples = int(np.unique(data["source_curve_index"]).size)
+    shared_split = resolve_and_load_shared_split(
+        resolved_dataset_run, args.split_file, num_curve_samples
+    )
+    validate_training_split(args.training_dir, shared_split)
+    validation_data = subset_symbolic_data(
+        data,
+        source_curve_mask(data["source_curve_index"], shared_split, "validation"),
+    )
+    test_data = subset_symbolic_data(
+        data,
+        source_curve_mask(data["source_curve_index"], shared_split, "test"),
+    )
     variable_names = make_pysr_variable_names(data["feature_names"])
 
     all_metrics: list[pd.DataFrame] = []
     for segment_id in range(1, len(data["segment_names"]) + 1):
         segment_metrics, _ = evaluate_segment_candidates(
-            data,
+            validation_data,
             args.training_dir,
             variable_names,
             segment_id,
@@ -466,30 +615,58 @@ def main() -> None:
         all_metrics.append(segment_metrics)
 
     metrics = pd.concat(all_metrics, ignore_index=True)
+    metrics["evaluation_split"] = "validation"
     metrics.to_csv(args.output_dir / "candidate_metrics.csv", index=False)
     plot_complexity_vs_error(metrics, figures_dir)
 
     selected = choose_candidates(metrics, args)
-    y_pred_all, selected_df = evaluate_selected_combination(data, metrics, selected, variable_names)
+    _, validation_y_pred, _ = evaluate_selected_combination(
+        validation_data, metrics, selected, variable_names
+    )
+    validation_metrics = regression_metrics(validation_data["y"], validation_y_pred)
+    raw_y_pred_all, y_pred_all, selected_df = evaluate_selected_combination(
+        test_data, metrics, selected, variable_names
+    )
     selected_df.to_csv(args.output_dir / "selected_candidates.csv", index=False)
 
-    selected_metrics = regression_metrics(data["y"], y_pred_all)
+    selected_metrics = regression_metrics(test_data["y"], y_pred_all)
+    raw_physical_diagnostics = prediction_diagnostics(raw_y_pred_all)
+    physical_diagnostics = prediction_diagnostics(y_pred_all)
+    boundary_diagnostics = boundary_transition_diagnostics(test_data, y_pred_all)
+    boundary_diagnostics.to_csv(
+        args.output_dir / "boundary_transition_metrics.csv", index=False
+    )
     selected_summary = {
         "dataset_file": str(args.dataset_file),
+        "dataset_run": resolved_dataset_run,
+        "shared_split_file": shared_split["split_file"],
+        "shared_split_hash": shared_split["split_hash"],
         "training_dir": str(args.training_dir),
+        "candidate_selection_split": "validation",
+        "final_evaluation_split": "test",
         "selection_rule": args.selection_rule,
+        "output_postprocessing": {
+            "method": "clip",
+            "lower_bound": OUTPUT_LOWER_BOUND,
+            "upper_bound": OUTPUT_UPPER_BOUND,
+            "num_values_clipped": count_values_clipped(raw_y_pred_all),
+        },
         "selected_candidates": selected,
         "feature_names": data["feature_names"],
         "pysr_variable_names": variable_names,
         "overall_metrics": selected_metrics,
+        "validation_selection_metrics": validation_metrics,
+        "raw_prediction_diagnostics": raw_physical_diagnostics,
+        "prediction_diagnostics": physical_diagnostics,
+        "boundary_transition_diagnostics": boundary_diagnostics.to_dict(orient="records"),
     }
     with (args.output_dir / "selected_combination_summary.json").open("w", encoding="utf-8") as file:
         json.dump(selected_summary, file, indent=2)
 
-    freq_values = data["X"][:, -1]
-    plot_selected_scatter(data["y"], y_pred_all, figures_dir, args.max_plot_points, args.random_seed)
-    plot_error_vs_frequency(freq_values, y_pred_all - data["y"], figures_dir, args.max_plot_points, args.random_seed)
-    plot_curve_comparisons(data, y_pred_all, figures_dir, args.num_curves, args.random_seed)
+    freq_values = test_data["X"][:, -1]
+    plot_selected_scatter(test_data["y"], y_pred_all, figures_dir, args.max_plot_points, args.random_seed)
+    plot_error_vs_frequency(freq_values, y_pred_all - test_data["y"], figures_dir, args.max_plot_points, args.random_seed)
+    plot_curve_comparisons(test_data, y_pred_all, figures_dir, args.num_curves, args.random_seed)
 
     print("Symbolic candidate evaluation complete.")
     print(f"Candidate metrics: {args.output_dir / 'candidate_metrics.csv'}")
@@ -499,6 +676,14 @@ def main() -> None:
         f"RMSE={selected_metrics['rmse']:.6f}, "
         f"MAE={selected_metrics['mae']:.6f}, "
         f"R2={selected_metrics['r2']:.6f}"
+    )
+    print(
+        "Prediction diagnostics: "
+        f"raw_range=[{raw_physical_diagnostics['prediction_min']:.6f}, "
+        f"{raw_physical_diagnostics['prediction_max']:.6f}], "
+        f"clipped_values={count_values_clipped(raw_y_pred_all)}, "
+        f"final_range=[{physical_diagnostics['prediction_min']:.6f}, "
+        f"{physical_diagnostics['prediction_max']:.6f}]"
     )
     print(f"Figures saved to: {figures_dir}")
 

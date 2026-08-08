@@ -1,0 +1,60 @@
+{
+  "dataset_file": "C:\\MasterThesis_Project\\surrogate_model\\datasets\\run2\\global_SR\\Wool_symbolic_global.mat",
+  "dataset_run": "run2",
+  "fiberfolder": "Wool",
+  "num_curve_samples": 1000,
+  "num_symbolic_samples": 64000,
+  "feature_names": [
+    "phi",
+    "h",
+    "sigma",
+    "alpha_infinity",
+    "lambda",
+    "lambda_prime",
+    "k0_prime",
+    "f"
+  ],
+  "pysr_variable_names": [
+    "phi",
+    "h",
+    "sigma",
+    "alpha_infinity",
+    "lambda_var",
+    "lambda_prime",
+    "k0_prime",
+    "f"
+  ],
+  "feature_name_mapping": {
+    "phi": "phi",
+    "h": "h",
+    "sigma": "sigma",
+    "alpha_infinity": "alpha_infinity",
+    "lambda": "lambda_var",
+    "lambda_prime": "lambda_prime",
+    "k0_prime": "k0_prime",
+    "f": "f"
+  },
+  "global_name": "global_100_2000",
+  "global_bounds_hz": [
+    100.0,
+    2000.0
+  ],
+  "training_args": {
+    "dataset_run": "run2",
+    "dataset_file": "C:\\MasterThesis_Project\\surrogate_model\\datasets\\run2\\global_SR\\Wool_symbolic_global.mat",
+    "output_root": "C:\\MasterThesis_Project\\surrogate_model\\global_symbolic_regression\\artifacts\\wool_global_symbolic_pysr_runs",
+    "output_dir": "C:\\MasterThesis_Project\\surrogate_model\\global_symbolic_regression\\archive\\smoke_tests\\artifacts\\global_smoke_training_20260803",
+    "run_name": "",
+    "random_seed": 42,
+    "test_size": 0.2,
+    "max_samples": 500,
+    "niterations": 1,
+    "populations": 1,
+    "population_size": 20,
+    "maxsize": 8,
+    "model_selection": "best",
+    "procs": 0,
+    "julia_exe": "C:\\MasterThesis_Project\\surrogate_model\\segmented_symbolic_regression\\.venv_py311\\julia_env\\pyjuliapkg\\install\\bin\\julia.exe",
+    "overwrite": false
+  }
+}

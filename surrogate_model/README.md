@@ -10,8 +10,8 @@
   - Current segmented symbolic-regression workflow using PySR.
   - This is the active segmented SR model branch.
 - [global_symbolic_regression](</C:/Users/liuzi/OneDrive/Master Thesis/Fibers/surrogate_model/global_symbolic_regression>)
-  - Placeholder for the planned global SR model branch.
-  - It is intended for one full-range symbolic formula over `100-2000 Hz`.
+  - Current global symbolic-regression workflow using one full-range PySR
+    formula over `100-2000 Hz`.
 - [docs](</C:/Users/liuzi/OneDrive/Master Thesis/Fibers/surrogate_model/docs>)
   - General background notes, original strategy documents, and reference material.
 
@@ -21,13 +21,30 @@ All model comparisons should use one dataset run at a time.
 
 Current comparison dataset:
 
-- [datasets/run1](</C:/Users/liuzi/OneDrive/Master Thesis/Fibers/surrogate_model/datasets/run1>)
+- `datasets/run2`
   - `MLP/Wool_surrogate_dataset.mat`: shared teacher curve dataset for MLP.
   - `segmented_SR/Wool_symbolic_segmented.mat`: scalar dataset for segmented SR.
   - `global_SR/Wool_symbolic_global.mat`: scalar dataset for global SR.
+  - `shared_curve_split.json`: shared source-curve train/validation/test split.
   - `dataset_manifest.json`: source and comparison metadata.
 
+`datasets/run1` remains as the earlier baseline dataset run.
+
 Use only datasets from the same `run*` folder when comparing MLP, segmented SR, and global SR.
+
+All model branches must also use the same `shared_curve_split.json`. The split
+is defined over 1-based source curve indices, not scalar frequency rows. MLP
+reads the curve indices directly; symbolic datasets select rows through
+`source_curve_index`. Candidate selection uses validation curves and final
+metrics use test curves.
+
+The shared split is frequency-grid independent. Changing the frequency range
+or number of frequency points does not require changing the split while the
+source curve identities remain compatible. Generate or regenerate it with:
+
+```powershell
+python surrogate_model/generate_shared_curve_split.py --dataset-run run2
+```
 
 ## Recommended Entry Points
 
@@ -37,6 +54,10 @@ Use only datasets from the same `run*` folder when comparing MLP, segmented SR, 
   - [inspect_teacher_dataset.m](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/data_generation/inspect_teacher_dataset.m:1)
 - MLP baseline training:
   - [mlp_train_surrogate_baseline.m](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/MLP/mlp_train_surrogate_baseline.m:1)
+  - `MLP/mlp_run_run2_baseline_training.m`: reproducible run2 entry point.
+  - Each execution creates a unique timestamped directory under
+    `MLP/artifacts/wool_baseline_mlp_runs/`. Existing nonempty artifact
+    directories are never overwritten.
 - Symbolic scalar dataset generation:
   - [generate_segmented_symbolic_dataset.m](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/segmented_symbolic_regression/generate_segmented_symbolic_dataset.m:1)
 - Symbolic scalar dataset inspection:
@@ -45,7 +66,7 @@ Use only datasets from the same `run*` folder when comparing MLP, segmented SR, 
   - [strategy_segmented_symbolic.md](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/segmented_symbolic_regression/strategy_segmented_symbolic.md:1)
 - Symbolic handoff note:
   - [segmented_symbolic_regression_handoff.md](/C:/Users/liuzi/OneDrive/Master%20Thesis/Fibers/surrogate_model/segmented_symbolic_regression/segmented_symbolic_regression_handoff.md:1)
-- Planned global symbolic-regression branch:
+- Global symbolic-regression training and evaluation:
   - [global_symbolic_regression](</C:/Users/liuzi/OneDrive/Master Thesis/Fibers/surrogate_model/global_symbolic_regression>)
 
 ## Naming Rule
@@ -53,6 +74,6 @@ Use only datasets from the same `run*` folder when comparing MLP, segmented SR, 
 - MLP-only scripts use the `mlp_` prefix.
 - Shared teacher-data pipeline scripts live only under `data_generation/`.
 - Segmented symbolic-regression files live under `segmented_symbolic_regression/`.
-- Global symbolic-regression files should live under `global_symbolic_regression/` once that model branch is implemented.
+- Global symbolic-regression files live under `global_symbolic_regression/`.
 
 This separation is intended to reduce accidental cross-calling between the MLP and symbolic-regression branches.
